@@ -1,0 +1,83 @@
+"""
+Container model - Schema definition only
+"""
+# builtins
+import enum
+import uuid
+from datetime import datetime, timezone
+from typing import Dict, Any
+
+# sqlalchemy
+from sqlalchemy import Column, String, DateTime, Boolean, Index, ForeignKey, Enum
+from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy.orm import relationship
+
+# local
+from src.models import Base
+
+
+class ContainerStatus(enum.Enum):
+    """Container status enum"""
+    RUNNING = "Running"
+    STOPPED = "Stopped"
+    FAILED = "Failed"
+    DELETED = "Deleted"
+
+
+class Container(Base):
+    """
+    Container model representing user containers
+    """
+    __tablename__ = "containers"
+
+    # Primary key
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    # Foreign key
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+
+    # Container information
+    name = Column(String(255), nullable=False)
+    image = Column(String(500), nullable=False)
+    status = Column(Enum(ContainerStatus), nullable=False, default=ContainerStatus.STOPPED)
+
+    # Resource limits
+    cpu_limit = Column(String(20), nullable=False, default='1')  # e.g., "1.0"
+    memory_limit = Column(String(20), nullable=False, default='1GB')  # e.g., "1GB"
+
+    # Configuration
+    port_mappings = Column(JSON, nullable=True)  # Port configuration as JSON
+    environment_vars = Column(JSON, nullable=True)  # Environment variables as JSON
+
+    # Timestamps
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    deleted_at = Column(DateTime, nullable=True)  # Soft delete
+
+    # Relationships
+    user = relationship("User", back_populates="containers")
+
+    # Indexes
+    __table_args__ = (
+        Index('idx_container_user_id', user_id),
+        Index('idx_container_status', status),
+        Index('idx_container_user_status', user_id, status),
+        Index('idx_container_deleted_at', deleted_at),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert model instance to dictionary"""
+        return {
+            "id": str(self.id),
+            "user_id": str(self.user_id),
+            "name": self.name,
+            "image": self.image,
+            "status": self.status.value if self.status else None,
+            "cpu_limit": self.cpu_limit,
+            "memory_limit": self.memory_limit,
+            "port_mappings": self.port_mappings,
+            "environment_vars": self.environment_vars,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None
+        }

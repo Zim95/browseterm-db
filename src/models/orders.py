@@ -1,0 +1,90 @@
+"""
+Orders model - Schema definition only
+"""
+# builtins
+import enum
+import uuid
+from datetime import datetime, timezone
+from typing import Dict, Any
+
+# sqlalchemy
+from sqlalchemy import Column, String, DateTime, Index, ForeignKey, DECIMAL, Enum
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+
+# local
+from src.models import Base
+
+
+class OrderStatus(enum.Enum):
+    """Order status enum"""
+    PENDING = "Pending"
+    PAID = "Paid"
+    FAILED = "Failed"
+    REFUNDED = "Refunded"
+
+
+class Currency(enum.Enum):
+    """Currency enum"""
+    INR = "INR"
+    USD = "USD"
+    EUR = "EUR"
+
+
+class Orders(Base):
+    """
+    Orders model representing payment orders
+    """
+    __tablename__ = "orders"
+
+    # Primary key
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    # Foreign keys
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey('subscriptions.id'), nullable=True)
+    subscription_type_id = Column(UUID(as_uuid=True), ForeignKey('subscription_types.id'), nullable=False)
+
+    # Payment information
+    amount = Column(DECIMAL(10, 2), nullable=False)
+    currency = Column(Enum(Currency), nullable=False, default=Currency.INR)
+    status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
+    payment_method = Column(String(100), nullable=True)  # stripe, paypal, etc.
+    payment_provider_id = Column(String(255), nullable=True)  # External payment reference ID
+
+    # Timestamps
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+    paid_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="orders")
+    subscription = relationship("Subscription", back_populates="orders")
+    subscription_type = relationship("SubscriptionType", back_populates="orders")
+
+    # Indexes
+    __table_args__ = (
+        Index('idx_orders_user_id', user_id),
+        Index('idx_orders_subscription_id', subscription_id),
+        Index('idx_orders_status', status),
+        Index('idx_orders_created_at', created_at),
+        Index('idx_orders_user_status', user_id, status),
+        Index('idx_orders_payment_provider_id', payment_provider_id),
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert model instance to dictionary"""
+        return {
+            "id": str(self.id),
+            "user_id": str(self.user_id),
+            "subscription_id": str(self.subscription_id) if self.subscription_id else None,
+            "subscription_type_id": str(self.subscription_type_id),
+            "amount": float(self.amount),
+            "currency": self.currency.value if self.currency else None,
+            "status": self.status.value if self.status else None,
+            "payment_method": self.payment_method,
+            "payment_provider_id": self.payment_provider_id,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "paid_at": self.paid_at.isoformat() if self.paid_at else None
+        }
