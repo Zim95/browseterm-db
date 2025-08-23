@@ -7,6 +7,8 @@ from src.models.subscription_types import SubscriptionType
 from src.models.subscriptions import Subscription  
 from src.models.containers import Container
 from src.models.orders import Orders
+from src.models import Base
+
 
 # Export all models only
 __all__ = [
@@ -14,5 +16,6 @@ __all__ = [
     'SubscriptionType', 
     'Subscription',
     'Container',
-    'Orders'
+    'Orders',
+    'Base'
 ]
