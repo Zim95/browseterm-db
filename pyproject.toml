@@ -9,6 +9,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 sqlalchemy = "^2.0.43"
+psycopg2-binary = "^2.9.9"
+alembic = "^1.13.2"
 
 
 [build-system]

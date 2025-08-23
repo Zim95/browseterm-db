@@ -60,6 +60,12 @@ class DBConfig:
             bind=self.engine,
         )
 
+    def get_db_url(self) -> str:
+        '''
+        Get the database URL.
+        '''
+        return self.database_url
+
     def get_db_session(self) -> Session:
         '''
         Get a database session.
