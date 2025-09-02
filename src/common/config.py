@@ -15,6 +15,9 @@ DB_POOL_RECYCLE = 3600  # recycle connections every hour
 # SQL Alchemy Configuration
 SQL_ECHO = os.getenv("SQL_ECHO", "false").lower() == "true"  # enable SQL logging in development
 
+# Migrations Directory
+MIGRATIONS_DIR = "src/migrations"
+
 
 # Database Configuration
 class DBConfig:
