@@ -64,6 +64,7 @@ class User(Base):
     '''
     Why do I need last_login?
     1. Track when user last logged in. Send emails, or deactivate accounts if they haven't logged in for a long time.
+    2. Only to be set when the user actually logs in, not during user creation.
     '''
     last_login = Column(DateTime, nullable=True)
 
