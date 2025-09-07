@@ -34,14 +34,44 @@ class User(Base):
     # User information
     email = Column(String(255), unique=True, nullable=False, index=True)
     provider = Column(Enum(AuthProvider), nullable=False)
+
+    '''
+    Why do I need the provider_id?
+    1. If user changes their email within the same provider (eg google), we will still be able to identify the user.
+    2. Different people use a shared email but with different providers (eg google and github), then they need to be treated as different accounts.
+
+    Basically, we use provider and provider_id to check if the user is unique or the same.
+    '''
     provider_id = Column(String(255), nullable=False)
 
     # Timestamps
+    '''
+    Why do I need created_at?
+    1. Answer questions like: how many users signed up this month? User growth over time?
+    2. Show welcome message to new users. Send follow up emails.
+    3. Track account age: We can introduce age specific features like gifts, discounts, etc for long users.
+    '''
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+    '''
+    Why do I need updated_at? (We update this field even if we change the smallest thing like last_login)
+    1. Track when user last updated their account. Find inactive users, recently active users.
+    2. Security: Alert when suspicious updates were made. Track when user updated profile.
+    3. MOST IMPORTANT: Sync only modified records. Sync only records modified since last sync.
+    '''
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
+
+    '''
+    Why do I need last_login?
+    1. Track when user last logged in. Send emails, or deactivate accounts if they haven't logged in for a long time.
+    '''
     last_login = Column(DateTime, nullable=True)
 
-    # Status
+    '''
+    This is for soft delete. We don't want to delete the user, we just want to deactivate them.
+    So, if we want to delete the user, we just set this field to False.
+    We can resume the account by setting this field to True if the user ever wants to login again but has a deactivated account.
+    '''
     is_active = Column(Boolean, default=True, nullable=False)
 
     # Relationships
