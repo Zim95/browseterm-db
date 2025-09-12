@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any
 
 # sqlalchemy
-from sqlalchemy import Column, String, DateTime, Boolean, Index, Enum
+from sqlalchemy import Column, String, DateTime, Boolean, Index, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -80,11 +80,19 @@ class User(Base):
     subscription = relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
     orders = relationship("Orders", back_populates="user", cascade="all, delete-orphan")
 
-    # Indexes
+    # Indexes and constraints
+    '''
+    Why do I need the UniqueConstraint on provider and provider_id?
+    --------------------------------------------------------------
+    - Well, provider_id will be unique for a particular provider.
+    - But, we cannot guarantee uniqueness across providers. Eg: google and github can have the same provider_id by chance.
+    - So, we create a composite key of provider and provider_id to ensure uniqueness across providers.
+    '''
     __table_args__ = (
         Index('idx_user_provider', provider),
         Index('idx_user_is_active', is_active),
         Index('idx_user_email_provider', email, provider),
+        UniqueConstraint('provider', 'provider_id', name='uq_user_provider_provider_id'),
     )
 
     def to_dict(self) -> Dict[str, Any]:
