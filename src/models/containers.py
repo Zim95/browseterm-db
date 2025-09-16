@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any
 
 # sqlalchemy
-from sqlalchemy import Column, String, DateTime, Boolean, Index, ForeignKey, Enum
+from sqlalchemy import Column, String, DateTime, Boolean, Index, ForeignKey, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 
@@ -57,12 +57,13 @@ class Container(Base):
     # Relationships
     user = relationship("User", back_populates="containers")
 
-    # Indexes
+    # Indexes and constraints
     __table_args__ = (
         Index('idx_container_user_id', user_id),
         Index('idx_container_status', status),
         Index('idx_container_user_status', user_id, status),
         Index('idx_container_deleted_at', deleted_at),
+        UniqueConstraint('user_id', 'name', name='uq_container_user_name'),
     )
 
     def to_dict(self) -> Dict[str, Any]:
