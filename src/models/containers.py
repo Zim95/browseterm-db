@@ -8,12 +8,16 @@ from datetime import datetime, timezone
 from typing import Dict, Any
 
 # sqlalchemy
-from sqlalchemy import Column, String, DateTime, Boolean, Index, ForeignKey, Enum, UniqueConstraint
+from sqlalchemy import Column, String, DateTime, Index, ForeignKey, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 
 # local
 from src.models import Base
+
+
+DEFAULT_CPU_LIMIT: str = '1'
+DEFAULT_MEMORY_LIMIT: str = '1GB'
 
 
 class ContainerStatus(enum.Enum):
