@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any
 
 # sqlalchemy
-from sqlalchemy import Column, String, DateTime, Boolean, Index, ForeignKey, Enum
+from sqlalchemy import Column, String, DateTime, Boolean, Index, ForeignKey, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -48,17 +48,18 @@ class Subscription(Base):
     cancelled_at = Column(DateTime, nullable=True)
 
     # Relationships
-    user = relationship("User", back_populates="subscription")
+    user = relationship("User", back_populates="subscription", uselist=False)
     subscription_type = relationship("SubscriptionType", back_populates="subscriptions")
     orders = relationship("Orders", back_populates="subscription", cascade="all, delete-orphan")
 
-    # Indexes
+    # Indexes and constraints
     __table_args__ = (
         Index('idx_subscription_user_id', user_id),
         Index('idx_subscription_status', status),
         Index('idx_subscription_type_id', subscription_type_id),
         Index('idx_subscription_valid_until', valid_until),
         Index('idx_subscription_auto_renew', auto_renew),
+        UniqueConstraint('user_id', name='uq_subscription_user_id'),
     )
 
     def to_dict(self) -> Dict[str, Any]:
