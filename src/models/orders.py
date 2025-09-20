@@ -42,6 +42,26 @@ class Orders(Base):
 
     # Foreign keys
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    '''
+    Why is subscription_id nullable?
+    --------------------------------
+    - Because, we want to allow users to make orders without a subscription.
+    - We can later update the order to add a subscription.
+    - This is useful for one-time orders.
+    - For example, a user can buy a container for a one-time fee.
+    - We can later update the order to add a subscription.
+    1. New user orders Basic Plan
+        - subscription_type_id = "basic-plan"
+        - subscription_id = NULL (no existing subscription)
+    2. After payment, create new subscription record
+        - Now user has subscription_id = "sub-123"
+    3. User renews Basic Plan
+        - subscription_type_id = "basic-plan" 
+        - subscription_id = "sub-123" (renewing existing)
+    4. User upgrades to Premium
+        - subscription_type_id = "premium-plan"
+        - subscription_id = "sub-123" (upgrading existing)
+    '''
     subscription_id = Column(UUID(as_uuid=True), ForeignKey('subscriptions.id'), nullable=True)
     subscription_type_id = Column(UUID(as_uuid=True), ForeignKey('subscription_types.id'), nullable=False)
 
