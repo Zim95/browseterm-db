@@ -13,7 +13,7 @@ from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 
 # local
-from src.models import Base
+from browseterm_db.models import Base
 
 
 DEFAULT_CPU_LIMIT: str = '1'

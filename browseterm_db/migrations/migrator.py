@@ -10,7 +10,7 @@ from alembic import command
 from alembic.config import Config
 
 # local
-from src.common.config import DBConfig, MIGRATIONS_DIR
+from browseterm_db.common.config import DBConfig, MIGRATIONS_DIR
 
 
 class Migrator:

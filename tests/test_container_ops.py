@@ -12,14 +12,14 @@ from unittest import TestCase
 import os
 
 # local
-from src.common.config import DBConfig
-from src.migrations.migrator import Migrator
-from src.common.config import MIGRATIONS_DIR
-from src.operations.container_ops import ContainerOps
-from src.operations.user_ops import UserOps
-from src.models.users import AuthProvider
-from src.operations import OperationResult
-from src.models.containers import ContainerStatus
+from browseterm_db.common.config import DBConfig
+from browseterm_db.migrations.migrator import Migrator
+from browseterm_db.common.config import MIGRATIONS_DIR
+from browseterm_db.operations.container_ops import ContainerOps
+from browseterm_db.operations.user_ops import UserOps
+from browseterm_db.models.users import AuthProvider
+from browseterm_db.operations import OperationResult
+from browseterm_db.models.containers import ContainerStatus
 
 
 load_dotenv('.env')

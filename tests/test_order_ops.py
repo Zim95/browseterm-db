@@ -14,19 +14,19 @@ from unittest import TestCase
 import os
 
 # local
-from src.common.config import DBConfig
-from src.migrations.migrator import Migrator
-from src.common.config import MIGRATIONS_DIR
-from src.models.subscriptions import SubscriptionStatus
-from src.operations.orders_ops import OrdersOps
-from src.operations.user_ops import UserOps
-from src.operations.subscription_type_ops import SubscriptionTypeOps
-from src.operations.subscription_ops import SubscriptionOps
-from src.models.users import AuthProvider
-from src.models.orders import OrderStatus, OrdersCurrency
-from src.models.subscription_types import SubscriptionTypeCurrency
-from src.operations import OperationResult
-from src.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT
+from browseterm_db.common.config import DBConfig
+from browseterm_db.migrations.migrator import Migrator
+from browseterm_db.common.config import MIGRATIONS_DIR
+from browseterm_db.models.subscriptions import SubscriptionStatus
+from browseterm_db.operations.orders_ops import OrdersOps
+from browseterm_db.operations.user_ops import UserOps
+from browseterm_db.operations.subscription_type_ops import SubscriptionTypeOps
+from browseterm_db.operations.subscription_ops import SubscriptionOps
+from browseterm_db.models.users import AuthProvider
+from browseterm_db.models.orders import OrderStatus, OrdersCurrency
+from browseterm_db.models.subscription_types import SubscriptionTypeCurrency
+from browseterm_db.operations import OperationResult
+from browseterm_db.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT
 
 
 load_dotenv('.env')

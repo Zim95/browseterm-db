@@ -4,7 +4,7 @@ Main entry point for the browseterm-db package
 """
 # Note: These imports will work when the package is installed
 # They use relative imports within the package
-from .operations.all_operations import (
+from browseterm_db.operations.all_operations import (
     UserOps,
     ContainerOps, 
     OrdersOps,
@@ -15,7 +15,7 @@ from .operations.all_operations import (
     DBConfig
 )
 
-from .models.all_models import (
+from browseterm_db.models.all_models import (
     User,
     SubscriptionType,
     Subscription,

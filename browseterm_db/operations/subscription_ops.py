@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.orm import Session, Query
 
 # local
-from src.models.subscriptions import Subscription, SubscriptionStatus
+from browseterm_db.models.subscriptions import Subscription, SubscriptionStatus
 from . import DBOperations, OperationResult
 
 
@@ -125,7 +125,7 @@ class SubscriptionOps(DBOperations):
             valid_until: datetime | None = self._convert_insert_value('valid_until', data.get('valid_until'))
             if not valid_until:
                 # Get subscription type to calculate valid_until
-                from src.models.subscription_types import SubscriptionType
+                from browseterm_db.models.subscription_types import SubscriptionType
                 sub_type = session.query(SubscriptionType).filter(
                     SubscriptionType.id == subscription_type_id
                 ).first()

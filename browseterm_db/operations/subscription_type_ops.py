@@ -12,9 +12,9 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.orm import Session, Query
 
 # local
-from src.models.subscription_types import SubscriptionType, SubscriptionTypeCurrency
-from . import DBOperations, OperationResult
-from src.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT
+from browseterm_db.models.subscription_types import SubscriptionType, SubscriptionTypeCurrency
+from browseterm_db.operations import DBOperations, OperationResult
+from browseterm_db.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT
 
 
 logger = logging.getLogger(__name__)

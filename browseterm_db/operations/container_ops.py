@@ -13,9 +13,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm import Query
 
 # local
-from src.models.containers import Container, ContainerStatus
-from src.operations import DBOperations, OperationResult
-from src.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT
+from browseterm_db.models.containers import Container, ContainerStatus
+from browseterm_db.operations import DBOperations, OperationResult
+from browseterm_db.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT
 
 
 logger = logging.getLogger(__name__)

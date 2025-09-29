@@ -20,16 +20,16 @@ import uuid
 from dotenv import load_dotenv
 
 # local
-from src.operations.user_ops import UserOps
-from src.operations.container_ops import ContainerOps
-from src.operations.orders_ops import OrdersOps
-from src.operations.subscription_ops import SubscriptionOps
-from src.operations.subscription_type_ops import SubscriptionTypeOps
-from src.operations import OperationResult
-from src.common.config import DBConfig
-from src.migrations.migrator import Migrator
-from src.common.config import MIGRATIONS_DIR
-from src.models.users import AuthProvider
+from browseterm_db.operations.user_ops import UserOps
+from browseterm_db.operations.container_ops import ContainerOps
+from browseterm_db.operations.orders_ops import OrdersOps
+from browseterm_db.operations.subscription_ops import SubscriptionOps
+from browseterm_db.operations.subscription_type_ops import SubscriptionTypeOps
+from browseterm_db.operations import OperationResult
+from browseterm_db.common.config import DBConfig
+from browseterm_db.migrations.migrator import Migrator
+from browseterm_db.common.config import MIGRATIONS_DIR
+from browseterm_db.models.users import AuthProvider
 
 
 load_dotenv('.env')
@@ -127,7 +127,7 @@ class TestUserOps(TestCase):
         self.user_ops.delete({"id": created_user["id"]})
         print('OK')
 
-    @mock.patch('src.operations.user_ops.logger.error', return_value='Duplicate user creation should fail. This is expected.')
+    @mock.patch('browseterm_db.operations.user_ops.logger.error', return_value='Duplicate user creation should fail. This is expected.')
     def test_2_duplicate_user_creation_should_fail(self, _: mock.MagicMock) -> None:
         '''
         Test case 2: Duplicate user creation should fail.

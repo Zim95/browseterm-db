@@ -14,8 +14,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 # local
-from src.common.config import DBConfig
-from src.models.all_models import *
+from browseterm_db.common.config import DBConfig
+from browseterm_db.models.all_models import *
 
 
 logger = logging.getLogger(__name__)

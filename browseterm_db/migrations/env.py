@@ -2,7 +2,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 
-from src.models.all_models import Base  # Your models metadata
+from browseterm_db.models.all_models import Base  # Your models metadata
 
 # Alembic Config
 config = context.config

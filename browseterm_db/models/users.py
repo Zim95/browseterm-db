@@ -13,7 +13,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 # local
-from src.models import Base
+from browseterm_db.models import Base
 
 
 class AuthProvider(enum.Enum):

@@ -33,8 +33,8 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.orm import Session, Query
 
 # local
-from src.models.orders import Orders, OrderStatus, OrdersCurrency
-from src.operations import DBOperations, OperationResult
+from browseterm_db.models.orders import Orders, OrderStatus, OrdersCurrency
+from browseterm_db.operations import DBOperations, OperationResult
 
 
 logger = logging.getLogger(__name__)

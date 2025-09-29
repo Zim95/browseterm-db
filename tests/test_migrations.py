@@ -8,8 +8,8 @@ from alembic.util import CommandError
 from sqlalchemy import text
 
 # local
-from src.common.config import DBConfig, MIGRATIONS_DIR
-from src.migrations.migrator import Migrator
+from browseterm_db.common.config import DBConfig, MIGRATIONS_DIR
+from browseterm_db.migrations.migrator import Migrator
 
 # load the environment variables
 load_dotenv('.env')
