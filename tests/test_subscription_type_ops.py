@@ -14,7 +14,6 @@ Here, we need to test the following:
 from dotenv import load_dotenv
 from unittest import TestCase
 import os
-from typing import List, Dict, Any
 
 # local
 from src.common.config import DBConfig
