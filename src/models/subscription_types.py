@@ -53,8 +53,8 @@ class SubscriptionType(Base):
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
 
     # Relationships
-    subscriptions = relationship("Subscription", back_populates="subscription_type")
-    orders = relationship("Orders", back_populates="subscription_type")
+    subscriptions = relationship("Subscription", back_populates="subscription_type", cascade="all, delete-orphan")
+    orders = relationship("Orders", back_populates="subscription_type", cascade="all, delete-orphan")
 
     # Indexes
     __table_args__ = (
