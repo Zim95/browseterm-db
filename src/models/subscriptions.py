@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any
 
 # sqlalchemy
-from sqlalchemy import Column, String, DateTime, Boolean, Index, ForeignKey, Enum, UniqueConstraint
+from sqlalchemy import Column, DateTime, Boolean, Index, ForeignKey, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -38,7 +38,7 @@ class Subscription(Base):
     subscription_type_id = Column(UUID(as_uuid=True), ForeignKey('subscription_types.id'), nullable=False)
 
     # Subscription status and details
-    status = Column(Enum(SubscriptionStatus), nullable=False, default=SubscriptionStatus.ACTIVE)
+    status = Column(Enum(SubscriptionStatus), nullable=False, default=SubscriptionStatus.PENDING)
     auto_renew = Column(Boolean, default=True, nullable=False)
 
     # Timestamps
