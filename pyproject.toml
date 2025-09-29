@@ -5,7 +5,9 @@ description = "Postgres database setup for browseterm"
 authors = ["Zim95 <shresthanamah@gmail.com>"]
 license = "Apache 2.0"
 readme = "README.md"
-packages = [{include="src"}]
+packages = [
+    {include = "src", to = "browseterm_db"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
