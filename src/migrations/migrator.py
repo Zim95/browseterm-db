@@ -109,7 +109,8 @@ class Migrator:
             """))
             # Drop all custom enum types
             conn.execute(text("""
-                DROP TYPE IF EXISTS currency CASCADE;
+                DROP TYPE IF EXISTS orderscurrency CASCADE;
+                DROP TYPE IF EXISTS subscriptiontypecurrency CASCADE;
                 DROP TYPE IF EXISTS authprovider CASCADE;
                 DROP TYPE IF EXISTS orderstatus CASCADE;
                 DROP TYPE IF EXISTS subscriptionstatus CASCADE;
