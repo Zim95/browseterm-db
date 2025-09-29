@@ -17,6 +17,16 @@ SQLAlchemy ORM library setup. Handles migrations as well.
    $ https://github.com/Zim95/browseterm-db.git
    ```
 
+- Create an `.env` file at the root of the directory with the following values:
+   ```text
+   TEST_DB_USERNAME=<username>
+   TEST_DB_PASSWORD=<password>
+   TEST_DB_HOST=<host>
+   TEST_DB_PORT=<port>
+   TEST_DB_DATABASE=<test_db_name>
+   ```
+   Make sure a database with this connection configuration exists. Do not use quotations in the values. Do not add spaces around =.
+
 - To run all the tests:
    ```bash
    $ python -m unittest discover -s ./tests/ -p "test_*.py"
