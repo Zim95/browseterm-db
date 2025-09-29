@@ -16,7 +16,7 @@ from sqlalchemy.orm import relationship
 from src.models import Base
 
 
-class Currency(enum.Enum):
+class SubscriptionTypeCurrency(enum.Enum):
     """Currency enum"""
     INR = "INR"
     USD = "USD"
@@ -36,7 +36,7 @@ class SubscriptionType(Base):
     name = Column(String(100), nullable=False)  # Display name
     type = Column(String(50), unique=True, nullable=False)  # Internal type identifier
     amount = Column(DECIMAL(10, 2), nullable=False)  # Price
-    currency = Column(Enum(Currency), nullable=False, default=Currency.INR)  # Currency code
+    currency = Column(Enum(SubscriptionTypeCurrency), nullable=False, default=SubscriptionTypeCurrency.INR)  # Currency code
     duration_days = Column(Integer, nullable=False)  # Subscription duration
 
     # Limits

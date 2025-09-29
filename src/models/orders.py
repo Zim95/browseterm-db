@@ -24,7 +24,7 @@ class OrderStatus(enum.Enum):
     REFUNDED = "Refunded"
 
 
-class Currency(enum.Enum):
+class OrdersCurrency(enum.Enum):
     """Currency enum"""
     INR = "INR"
     USD = "USD"
@@ -67,7 +67,7 @@ class Orders(Base):
 
     # Payment information
     amount = Column(DECIMAL(10, 2), nullable=False)
-    currency = Column(Enum(Currency), nullable=False, default=Currency.INR)
+    currency = Column(Enum(OrdersCurrency), nullable=False, default=OrdersCurrency.INR)
     status = Column(Enum(OrderStatus), nullable=False, default=OrderStatus.PENDING)
     payment_method = Column(String(100), nullable=True)  # stripe, paypal, etc.
     payment_provider_id = Column(String(255), nullable=True)  # External payment reference ID
