@@ -36,7 +36,7 @@ class UserOps(DBOperations):
     def _convert_insert_value(self, key: str, value: Any) -> Any:
         """Convert insert values to appropriate types"""
         insert_conversion_map: dict = {
-            'provider': lambda value: value.value if isinstance(value, AuthProvider) else value,
+            'provider': lambda value: value if isinstance(value, AuthProvider) else AuthProvider(value),
             'last_login': lambda value: datetime.fromisoformat(value) if value and isinstance(value, str) else value,
         }
         if key in insert_conversion_map:
@@ -46,7 +46,7 @@ class UserOps(DBOperations):
     def _convert_update_value(self, key: str, value: Any) -> Any:
         """Convert update values to appropriate types"""
         update_conversion_map: dict = {
-            'provider': lambda value: value.value if isinstance(value, AuthProvider) else value,
+            'provider': lambda value: value if isinstance(value, AuthProvider) else AuthProvider(value),
             'last_login': lambda value: datetime.fromisoformat(value) if value and isinstance(value, str) else value,
         }
         if key in update_conversion_map:
@@ -127,7 +127,7 @@ class UserOps(DBOperations):
         try:
             session: Session = self._get_session()
             # Handle provider enum
-            provider: AuthProvider = AuthProvider(data.get('provider')) if isinstance(data.get('provider'), str) else data.get('provider')
+            provider: AuthProvider = self._convert_insert_value('provider', data.get('provider'))
             last_login: datetime | None = self._convert_insert_value('last_login', data.get('last_login'))
             # Create user instance
             user: User = User(

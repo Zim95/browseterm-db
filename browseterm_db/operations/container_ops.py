@@ -38,11 +38,21 @@ class ContainerOps(DBOperations):
     def _convert_update_value(self, key: str, value: Any) -> Any:
         """Convert update values to appropriate types"""
         update_conversion_map: dict = {
-            'status': lambda value: value.value if isinstance(value, ContainerStatus) else value,
+            'status': lambda value: value if isinstance(value, ContainerStatus) else ContainerStatus(value),
             'user_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
         }
         if key in update_conversion_map:
             return update_conversion_map[key](value)
+        return value
+
+    def _convert_insert_value(self, key: str, value: Any) -> Any:
+        """Convert insert values to appropriate types"""
+        insert_conversion_map: dict = {
+            'status': lambda value: value if isinstance(value, ContainerStatus) else ContainerStatus(value),
+            'user_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
+        }
+        if key in insert_conversion_map:
+            return insert_conversion_map[key](value)
         return value
 
     def find(self, filters: Dict[str, Any], limit: Optional[int] = None, 

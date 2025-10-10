@@ -45,6 +45,21 @@ class OrdersOps(DBOperations):
     Orders operations implementing DBOperations abstract class
     """
 
+    def _convert_insert_value(self, key: str, value: Any) -> Any:
+        """Convert insert values to appropriate types"""
+        insert_conversion_map: dict = {
+            'currency': lambda value: value if isinstance(value, OrdersCurrency) else OrdersCurrency(value),
+            'status': lambda value: value if isinstance(value, OrderStatus) else OrderStatus(value),
+            'paid_at': lambda value: datetime.fromisoformat(value) if isinstance(value, str) else value,
+            'user_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
+            'subscription_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
+            'subscription_type_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
+            'amount': lambda value: Decimal(str(value)) if value is not None else None,
+        }
+        if key in insert_conversion_map:
+            return insert_conversion_map[key](value)
+        return value
+
     def _convert_filter_value(self, key: str, value: Any) -> Any:
         """Convert filter values to appropriate types"""
         filter_conversion_map: dict = {
@@ -59,8 +74,8 @@ class OrdersOps(DBOperations):
     def _convert_update_value(self, key: str, value: Any) -> Any:
         """Convert update values to appropriate types"""
         update_conversion_map: dict = {
-            'currency': lambda value: value.value if isinstance(value, OrdersCurrency) else value,
-            'status': lambda value: value.value if isinstance(value, OrderStatus) else value,
+            'currency': lambda value: value if isinstance(value, OrdersCurrency) else OrdersCurrency(value),
+            'status': lambda value: value if isinstance(value, OrderStatus) else OrderStatus(value),
             'paid_at': lambda value: datetime.fromisoformat(value) if isinstance(value, str) else value,
             'subscription_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
             'subscription_type_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,

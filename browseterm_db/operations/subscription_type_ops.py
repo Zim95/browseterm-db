@@ -37,11 +37,21 @@ class SubscriptionTypeOps(DBOperations):
     def _convert_update_value(self, key: str, value: Any) -> Any:
         """Convert update value to appropriate type"""
         update_conversion_map: dict = {
-            'currency': lambda value: value.value if isinstance(value, SubscriptionTypeCurrency) else value,
+            'currency': lambda value: value if isinstance(value, SubscriptionTypeCurrency) else SubscriptionTypeCurrency(value),
             'amount': lambda value: Decimal(str(value)) if value is not None else None,
         }
         if key in update_conversion_map:
             return update_conversion_map[key](value)
+        return value
+
+    def _convert_insert_value(self, key: str, value: Any) -> Any:
+        """Convert insert value to appropriate type"""
+        insert_conversion_map: dict = {
+            'currency': lambda value: value if isinstance(value, SubscriptionTypeCurrency) else SubscriptionTypeCurrency(value),
+            'amount': lambda value: Decimal(str(value)) if value is not None else None,
+        }
+        if key in insert_conversion_map:
+            return insert_conversion_map[key](value)
         return value
 
     def _convert_filter_value(self, key: str, value: Any) -> Any:
