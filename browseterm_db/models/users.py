@@ -101,6 +101,8 @@ class User(Base):
         """Convert model instance to dictionary"""
         return {
             "id": str(self.id),
+            "name": self.name,
+            "profile_picture_url": self.profile_picture_url,
             "email": self.email,
             "provider": self.provider.value if self.provider else None,
             "provider_id": self.provider_id,
