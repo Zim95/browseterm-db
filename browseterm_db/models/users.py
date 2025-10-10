@@ -32,6 +32,8 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # User information
+    name = Column(String(255), nullable=False)
+    profile_picture_url = Column(String(500), nullable=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     provider = Column(Enum(AuthProvider), nullable=False)
 

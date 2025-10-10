@@ -42,3 +42,16 @@ SQLAlchemy ORM library setup. Handles migrations as well.
    $ python -m unittest tests.<test_file_without_py_extension>.<classname>.<test_method_name>
    ```
    DO NOT DO THIS: The tests require setup. Running them individually will fail.
+
+
+# Initial Setup
+- If this is your first time setting up browsetermdb. Run the `init.py` file.
+   ```bash
+   $ python init.py
+   ```
+
+# Upgrading Migrations
+- If you want to create an upgrade in the migration.
+   ```bash
+   $ python upgrade.py <message>
+   ```
