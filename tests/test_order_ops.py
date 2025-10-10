@@ -85,6 +85,8 @@ class TestOrderOps(TestCase):
             "email": "order_test@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_order_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -180,6 +182,8 @@ class TestOrderOps(TestCase):
             "email": "invalid_status@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_invalid_status_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -227,6 +231,8 @@ class TestOrderOps(TestCase):
             "email": "invalid_currency@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_invalid_currency_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -274,6 +280,8 @@ class TestOrderOps(TestCase):
             "email": "delete_order@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_delete_order_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -333,6 +341,8 @@ class TestOrderOps(TestCase):
             "email": "order_subscription@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_order_sub_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -403,6 +413,8 @@ class TestOrderOps(TestCase):
             "email": "order_sub_type@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_order_sub_type_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)

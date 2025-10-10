@@ -132,6 +132,8 @@ class UserOps(DBOperations):
             # Create user instance
             user: User = User(
                 email=data.get('email'),
+                name=data.get('name'),
+                profile_picture_url=data.get('profile_picture_url'),
                 provider=provider,
                 provider_id=data.get('provider_id'),
                 last_login=last_login,

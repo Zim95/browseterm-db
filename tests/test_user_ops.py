@@ -89,6 +89,8 @@ class TestUserOps(TestCase):
             "email": "test@example.com", 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         result: OperationResult = self.user_ops.insert(user_data)
@@ -103,6 +105,8 @@ class TestUserOps(TestCase):
         self.assertEqual(created_user["email"], user_data["email"])
         self.assertEqual(created_user["provider"], user_data["provider"].value)
         self.assertEqual(created_user["provider_id"], user_data["provider_id"])
+        self.assertEqual(created_user["name"], user_data["name"])
+        self.assertEqual(created_user["profile_picture_url"], user_data["profile_picture_url"])
         self.assertEqual(created_user["is_active"], user_data["is_active"])
 
         # Verify UUID is generated
@@ -138,6 +142,8 @@ class TestUserOps(TestCase):
             "email": "duplicate@example.com", 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_456",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         # Create first user
@@ -164,6 +170,8 @@ class TestUserOps(TestCase):
             "email": "initial@example.com", 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_789",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         result: OperationResult = self.user_ops.insert(initial_data)
@@ -202,6 +210,8 @@ class TestUserOps(TestCase):
             "email": email, 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_shared_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         # Create GitHub user with same email
@@ -209,6 +219,8 @@ class TestUserOps(TestCase):
             "email": email, 
             "provider": AuthProvider.GITHUB, 
             "provider_id": "github_shared_456",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
 
@@ -233,6 +245,8 @@ class TestUserOps(TestCase):
             "email": "login_test@example.com", 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_login_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
 
@@ -246,6 +260,8 @@ class TestUserOps(TestCase):
             "email": "login_test2@example.com", 
             "provider": AuthProvider.GITHUB, 
             "provider_id": "github_login_456",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True,
             "last_login": login_time
         }
@@ -283,7 +299,9 @@ class TestUserOps(TestCase):
         user_data: dict = {
             "email": "active_test@example.com", 
             "provider": AuthProvider.GOOGLE, 
-            "provider_id": "google_active_123"
+            "provider_id": "google_active_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             # Note: not setting is_active explicitly
         }
 
@@ -328,6 +346,8 @@ class TestUserOps(TestCase):
             "email": "newuser@example.com", 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_newuser_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
 

@@ -76,6 +76,8 @@ class TestContainerOps(TestCase):
             "email": "duplicate@example.com", 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_456",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -140,6 +142,8 @@ class TestContainerOps(TestCase):
             "email": "duplicate@example.com", 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_456",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -177,6 +181,8 @@ class TestContainerOps(TestCase):
             "email": "invalid_status@example.com", 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_456",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -208,6 +214,8 @@ class TestContainerOps(TestCase):
             "email": "delete_user@example.com", 
             "provider": AuthProvider.GOOGLE, 
             "provider_id": "google_456",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)

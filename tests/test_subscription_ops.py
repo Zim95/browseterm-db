@@ -86,6 +86,8 @@ class TestSubscriptionOps(TestCase):
             "email": "subscription_test@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_sub_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -177,6 +179,8 @@ class TestSubscriptionOps(TestCase):
             "email": "subscription_test@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_sub_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -206,6 +210,8 @@ class TestSubscriptionOps(TestCase):
             "email": "subscription_test@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_sub_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -256,6 +262,8 @@ class TestSubscriptionOps(TestCase):
             "email": "subscription_test@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_sub_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -302,6 +310,8 @@ class TestSubscriptionOps(TestCase):
             "email": "subscription_test@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_sub_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -358,6 +368,8 @@ class TestSubscriptionOps(TestCase):
             "email": "subscription_test@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_sub_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)
@@ -429,6 +441,8 @@ class TestSubscriptionOps(TestCase):
             "email": "subscription_test@example.com",
             "provider": AuthProvider.GOOGLE,
             "provider_id": "google_sub_123",
+            "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg",
             "is_active": True
         }
         user_result: OperationResult = self.user_ops.insert(user_data)

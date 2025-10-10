@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: ee486fcb503c
+Revision ID: a7c9b7264450
 Revises: 
-Create Date: 2025-09-30 14:03:24.830398
+Create Date: 2025-10-10 22:09:11.731080
 
 """
 
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision = 'ee486fcb503c'
+revision = 'a7c9b7264450'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -42,6 +42,8 @@ def upgrade() -> None:
     op.create_index('idx_subscription_type_type', 'subscription_types', ['type'], unique=False)
     op.create_table('users',
     sa.Column('id', sa.UUID(), nullable=False),
+    sa.Column('name', sa.String(length=255), nullable=False),
+    sa.Column('profile_picture_url', sa.String(length=500), nullable=True),
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('provider', sa.Enum('GOOGLE', 'GITHUB', name='authprovider'), nullable=False),
     sa.Column('provider_id', sa.String(length=255), nullable=False),
