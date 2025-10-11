@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 7d890ae0df21
+Revision ID: c1025f963d00
 Revises: 
-Create Date: 2025-10-10 23:06:33.418142
+Create Date: 2025-10-11 13:33:00.992403
 
 """
 
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision = '7d890ae0df21'
+revision = 'c1025f963d00'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -27,6 +27,7 @@ def upgrade() -> None:
     sa.Column('amount', sa.DECIMAL(precision=10, scale=2), nullable=False),
     sa.Column('currency', sa.Enum('INR', 'USD', 'EUR', name='subscriptiontypecurrency'), nullable=False),
     sa.Column('duration_days', sa.Integer(), nullable=False),
+    sa.Column('extra_message', sa.Text(), nullable=True),
     sa.Column('max_containers', sa.Integer(), nullable=False),
     sa.Column('cpu_limit_per_container', sa.String(length=20), nullable=False),
     sa.Column('memory_limit_per_container', sa.String(length=20), nullable=False),

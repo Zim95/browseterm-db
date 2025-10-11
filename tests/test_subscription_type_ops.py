@@ -74,33 +74,6 @@ class TestSubscriptionTypeOps(TestCase):
         self.user_ops: UserOps = UserOps(self.db_config)
         self.subscription_ops: SubscriptionOps = SubscriptionOps(self.db_config)
         self.orders_ops: OrdersOps = OrdersOps(self.db_config)
-        # self.default_subscription_types: List[Dict[str, Any]] = [
-        #     {
-        #         "name": "Free Plan",
-        #         "type": "free",
-        #         "amount": 0,
-        #         "currency": Currency.INR,
-        #         "duration_days": 365,  # 1 year
-        #         "max_containers": 1,
-        #         "cpu_limit_per_container": "1",
-        #         "memory_limit_per_container": "1GB",
-        #         "description": "Free plan with basic container limits",
-        #         "is_active": True
-        #     },
-        #     {
-        #         "name": "Basic Plan",
-        #         "type": "basic",
-        #         "amount": 100,
-        #         "currency": Currency.INR,
-        #         "duration_days": 30,  # 1 month
-        #         "max_containers": 5,
-        #         "cpu_limit_per_container": "1",
-        #         "memory_limit_per_container": "1GB",x
-        #         "description": "Basic plan with increased container limits",
-        #         "is_active": True
-        #     }
-        # ]
-        # self.subscription_type_ops.insert_many(self.default_subscription_types)
 
     def test_1_subscription_type_creation_with_field_validation(self) -> None:
         '''
@@ -114,6 +87,7 @@ class TestSubscriptionTypeOps(TestCase):
             "amount": 1999,
             "currency": SubscriptionTypeCurrency.INR.value,
             "duration_days": 30,
+            "extra_message": "test extra message",
             "max_containers": 5,
             "cpu_limit_per_container": "2",
             "memory_limit_per_container": "4GB",
@@ -128,6 +102,7 @@ class TestSubscriptionTypeOps(TestCase):
         self.assertEqual(sub_type_result.data["amount"], float(subscription_type_data["amount"]))
         self.assertEqual(sub_type_result.data["currency"], subscription_type_data["currency"])
         self.assertEqual(sub_type_result.data["duration_days"], subscription_type_data["duration_days"])
+        self.assertEqual(sub_type_result.data["extra_message"], subscription_type_data["extra_message"])
         self.assertEqual(sub_type_result.data["max_containers"], subscription_type_data["max_containers"])
         self.assertEqual(sub_type_result.data["cpu_limit_per_container"], subscription_type_data["cpu_limit_per_container"])
         self.assertEqual(sub_type_result.data["memory_limit_per_container"], subscription_type_data["memory_limit_per_container"])

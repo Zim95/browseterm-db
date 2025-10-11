@@ -58,7 +58,8 @@ class SetupInitialMigrations():
                 "cpu_limit_per_container": DEFAULT_CPU_LIMIT,
                 "memory_limit_per_container": DEFAULT_MEMORY_LIMIT,
                 "description": "Free plan with basic container limits",
-                "is_active": True
+                "is_active": True,
+                "extra_message": None,
             },
             {
                 "name": "Basic Plan",
@@ -70,7 +71,21 @@ class SetupInitialMigrations():
                 "cpu_limit_per_container": DEFAULT_CPU_LIMIT,
                 "memory_limit_per_container": DEFAULT_MEMORY_LIMIT,
                 "description": "Basic plan with increased container limits",
-                "is_active": True
+                "is_active": True,
+                "extra_message": None,
+            },
+            {
+                "name": "Pro Plan",
+                "type": "pro",
+                "amount": 500,
+                "currency": SubscriptionTypeCurrency.INR,
+                "duration_days": 30,  # 1 month
+                "max_containers": 30,
+                "cpu_limit_per_container": 'Configurable',
+                "memory_limit_per_container": 'Configurable',
+                "description": "Basic plan with increased container limits",
+                "is_active": True,
+                "extra_message": "coming soon",
             }
         ]
         self.subscription_type_ops.insert_many(self.default_subscription_types)

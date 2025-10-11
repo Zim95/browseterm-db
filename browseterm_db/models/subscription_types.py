@@ -38,6 +38,7 @@ class SubscriptionType(Base):
     amount = Column(DECIMAL(10, 2), nullable=False)  # Price
     currency = Column(Enum(SubscriptionTypeCurrency), nullable=False, default=SubscriptionTypeCurrency.INR)  # Currency code
     duration_days = Column(Integer, nullable=False)  # Subscription duration
+    extra_message = Column(Text, nullable=True)  # Extra message
 
     # Limits
     max_containers = Column(Integer, nullable=False, default=1)
@@ -72,6 +73,7 @@ class SubscriptionType(Base):
             "amount": float(self.amount),
             "currency": self.currency.value if self.currency else None,
             "duration_days": self.duration_days,
+            "extra_message": self.extra_message,
             "max_containers": self.max_containers,
             "cpu_limit_per_container": self.cpu_limit_per_container,
             "memory_limit_per_container": self.memory_limit_per_container,
