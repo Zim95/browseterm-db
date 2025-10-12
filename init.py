@@ -84,7 +84,7 @@ class SetupInitialMigrations():
                 "cpu_limit_per_container": 'Configurable',
                 "memory_limit_per_container": 'Configurable',
                 "description": "Basic plan with increased container limits",
-                "is_active": True,
+                "is_active": False,
                 "extra_message": "coming soon",
             }
         ]
