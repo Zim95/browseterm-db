@@ -17,12 +17,15 @@ class Migrator:
     '''
     This class is used to handle the migrations.
     '''
-    def __init__(self, db_config: DBConfig, migrations_dir: str = MIGRATIONS_DIR) -> None:
+    def __init__(self, db_config: DBConfig, migrations_dir: str = MIGRATIONS_DIR, versions_subdir: str = "versions") -> None:
         self.db_config: DBConfig = db_config
         self.alembic_cfg: Config = Config(os.path.join(migrations_dir, "alembic.ini"))
         self.alembic_cfg.set_main_option("script_location", migrations_dir)
         self.alembic_cfg.set_main_option("sqlalchemy.url", self.db_config.get_db_url())
         self.migrations_dir: str = migrations_dir
+        self.versions_subdir: str = versions_subdir
+        # Set the version_locations to use the specified versions subdirectory
+        self.alembic_cfg.set_main_option("version_locations", os.path.join(migrations_dir, versions_subdir))
 
     def upgrade(self, revision: str = "head") -> None:
         """Apply migrations up to the given revision (default: latest)."""
@@ -50,7 +53,7 @@ class Migrator:
         from alembic.script import ScriptDirectory
         
         # Check if migrations already exist
-        versions_dir = os.path.join(self.migrations_dir, "versions")
+        versions_dir = os.path.join(self.migrations_dir, self.versions_subdir)
         
         if os.path.exists(versions_dir):
             existing_files = [f for f in os.listdir(versions_dir) if f.endswith('.py')]
@@ -122,7 +125,7 @@ class Migrator:
     def reset_migrations(self) -> None:
         """Reset the migrations by deleting all files in the versions directory."""
         import shutil
-        versions_dir: str = os.path.join(self.migrations_dir, "versions")
+        versions_dir: str = os.path.join(self.migrations_dir, self.versions_subdir)
         if not os.path.exists(versions_dir):
             print("Versions directory doesn't exist, nothing to reset")
             return
@@ -152,7 +155,7 @@ class Migrator:
 
     def is_migrations_clean(self) -> bool:
         """Check if migrations are in a clean state (no files)."""
-        versions_dir: str = os.path.join(self.migrations_dir, "versions")
+        versions_dir: str = os.path.join(self.migrations_dir, self.versions_subdir)
         if not os.path.exists(versions_dir):
             print("Versions directory doesn't exist, nothing to reset")
             return True

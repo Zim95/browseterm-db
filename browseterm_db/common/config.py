@@ -17,6 +17,7 @@ SQL_ECHO = os.getenv("SQL_ECHO", "false").lower() == "true"  # enable SQL loggin
 
 # Migrations Directory
 MIGRATIONS_DIR = "browseterm_db/migrations"
+TEST_MIGRATIONS_DIR = "browseterm_db/migrations"  # Test migrations use same base dir but test_versions subfolder
 
 
 # Database Configuration

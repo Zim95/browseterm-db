@@ -8,7 +8,7 @@ from alembic.util import CommandError
 from sqlalchemy import text
 
 # local
-from browseterm_db.common.config import DBConfig, MIGRATIONS_DIR
+from browseterm_db.common.config import DBConfig, TEST_MIGRATIONS_DIR
 from browseterm_db.migrations.migrator import Migrator
 
 # load the environment variables
@@ -27,7 +27,7 @@ class TestMigrations(TestCase):
             port=int(os.getenv('TEST_DB_PORT')),
             database=os.getenv('TEST_DB_DATABASE')
         )
-        self.migrator: Migrator = Migrator(self.db_config, MIGRATIONS_DIR)
+        self.migrator: Migrator = Migrator(self.db_config, TEST_MIGRATIONS_DIR, versions_subdir="test_versions")
         self.migrator.reset_database()  # reset the database
         # delete all files in the versions directory
         self.migrator.reset_migrations()
@@ -67,7 +67,7 @@ class TestMigrations(TestCase):
         '''
         revision_id: str = self.migrator.revision('Initial migration - create all tables', autogenerate=True)
         # test if the files are created
-        versions_dir: str = os.path.join(MIGRATIONS_DIR, "versions")
+        versions_dir: str = os.path.join(TEST_MIGRATIONS_DIR, "test_versions")
         self.assertEqual(os.path.exists(versions_dir), True)
         self.assertEqual(f'{revision_id}_initial_migration_create_all_tables.py' in os.listdir(versions_dir), True)
 
@@ -130,7 +130,7 @@ class ZZZCleanup(TestCase):
             port=int(os.getenv('TEST_DB_PORT')),
             database=os.getenv('TEST_DB_DATABASE')
         )
-        self.migrator: Migrator = Migrator(self.db_config, MIGRATIONS_DIR)
+        self.migrator: Migrator = Migrator(self.db_config, TEST_MIGRATIONS_DIR, versions_subdir="test_versions")
         self.migrator.reset_database()
         # delete all files in the versions directory
         self.migrator.reset_migrations()

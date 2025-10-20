@@ -14,7 +14,7 @@ import os
 # local
 from browseterm_db.common.config import DBConfig
 from browseterm_db.migrations.migrator import Migrator
-from browseterm_db.common.config import MIGRATIONS_DIR
+from browseterm_db.common.config import TEST_MIGRATIONS_DIR
 from browseterm_db.operations.container_ops import ContainerOps
 from browseterm_db.operations.user_ops import UserOps
 from browseterm_db.models.users import AuthProvider
@@ -37,7 +37,7 @@ class AAA_InitialSetup(TestCase):
             port=int(os.getenv('TEST_DB_PORT')),
             database=os.getenv('TEST_DB_DATABASE')
         )
-        self.migrator: Migrator = Migrator(self.db_config, MIGRATIONS_DIR)
+        self.migrator: Migrator = Migrator(self.db_config, TEST_MIGRATIONS_DIR, versions_subdir="test_versions")
 
     def test_setup(self) -> None:
         '''
@@ -261,7 +261,7 @@ class ZZZ_Cleanup(TestCase):
             port=int(os.getenv('TEST_DB_PORT')),
             database=os.getenv('TEST_DB_DATABASE')
         )
-        self.migrator: Migrator = Migrator(self.db_config, MIGRATIONS_DIR)
+        self.migrator: Migrator = Migrator(self.db_config, TEST_MIGRATIONS_DIR, versions_subdir="test_versions")
 
     def test_cleanup(self) -> None:
         self.migrator.reset_database()
