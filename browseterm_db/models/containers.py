@@ -50,6 +50,7 @@ class Container(Base):
     memory_limit = Column(String(20), nullable=False, default='1GB')  # e.g., "1GB"
 
     # Configuration
+    ip_address = Column(String(20), nullable=True)  # IP address of the container
     port_mappings = Column(JSON, nullable=True)  # Port configuration as JSON
     environment_vars = Column(JSON, nullable=True)  # Environment variables as JSON
 
@@ -82,6 +83,7 @@ class Container(Base):
             "status": self.status.value if self.status else None,
             "cpu_limit": self.cpu_limit,
             "memory_limit": self.memory_limit,
+            "ip_address": self.ip_address,
             "port_mappings": self.port_mappings,
             "environment_vars": self.environment_vars,
             "created_at": self.created_at.isoformat() if self.created_at else None,

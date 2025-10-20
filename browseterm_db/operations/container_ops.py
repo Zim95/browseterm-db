@@ -140,6 +140,7 @@ class ContainerOps(DBOperations):
                 status=status,
                 cpu_limit=data.get('cpu_limit', DEFAULT_CPU_LIMIT),
                 memory_limit=data.get('memory_limit', DEFAULT_MEMORY_LIMIT),
+                ip_address=data.get('ip_address'),
                 port_mappings=data.get('port_mappings'),
                 environment_vars=data.get('environment_vars')
             )
@@ -183,6 +184,7 @@ class ContainerOps(DBOperations):
                     status=status,
                     cpu_limit=data.get('cpu_limit', DEFAULT_CPU_LIMIT),
                     memory_limit=data.get('memory_limit', DEFAULT_MEMORY_LIMIT),
+                    ip_address=data.get('ip_address'),
                     port_mappings=data.get('port_mappings'),
                     environment_vars=data.get('environment_vars')
                 )

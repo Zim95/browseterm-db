@@ -106,7 +106,8 @@ class TestContainerOps(TestCase):
             "user_id": user_id,
             "image_id": image_id,
             "name": "test-container",
-            "status": ContainerStatus.RUNNING
+            "status": ContainerStatus.RUNNING,
+            "ip_address": "127.0.0.1"
         }
         container_result: OperationResult = self.container_ops.insert(container_data)
         # verify the container is created
@@ -118,6 +119,7 @@ class TestContainerOps(TestCase):
         self.assertEqual(container_result.data["status"], container_data["status"].value)
         self.assertEqual(container_result.data["cpu_limit"], '1')  # default value should be 1
         self.assertEqual(container_result.data["memory_limit"], '1GB')  # default value should be 1GB
+        self.assertEqual(container_result.data["ip_address"], "127.0.0.1")  # should match the provided value
         self.assertEqual(container_result.data["port_mappings"], None)  # default value should be None
         self.assertEqual(container_result.data["environment_vars"], None)  # default value should be None
         self.assertEqual(container_result.data["created_at"] is not None, True)  # created_at should be not None
@@ -152,7 +154,8 @@ class TestContainerOps(TestCase):
             "user_id": "invalid_user_id",
             "image_id": image_id,
             "name": "test-container",
-            "status": ContainerStatus.RUNNING
+            "status": ContainerStatus.RUNNING,
+            "ip_address": "127.0.0.1"
         }
         container_result: OperationResult = self.container_ops.insert(container_data)
         self.assertFalse(container_result.success, "Container creation should fail")
@@ -195,7 +198,8 @@ class TestContainerOps(TestCase):
             "user_id": user_id,
             "image_id": image_id,
             "name": "test-container",
-            "status": ContainerStatus.RUNNING
+            "status": ContainerStatus.RUNNING,
+            "ip_address": "127.0.0.1"
         }
         container_result: OperationResult = self.container_ops.insert(container_data)
         # verify the container is created
@@ -245,7 +249,8 @@ class TestContainerOps(TestCase):
             "user_id": user_id,
             "image_id": image_id,
             "name": "test-container",
-            "status": "Invalid"
+            "status": "Invalid",
+            "ip_address": "127.0.0.1"
         }
         container_result: OperationResult = self.container_ops.insert(container_data)
         self.assertFalse(container_result.success, "Container creation should fail")
@@ -289,7 +294,8 @@ class TestContainerOps(TestCase):
             "user_id": user_id,
             "image_id": image_id,
             "name": "test-container",
-            "status": ContainerStatus.RUNNING
+            "status": ContainerStatus.RUNNING,
+            "ip_address": "127.0.0.1"
         }
         container_result: OperationResult = self.container_ops.insert(container_data)
         # verify the container is created
