@@ -37,12 +37,12 @@ class Container(Base):
     # Primary key
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    # Foreign key
+    # Foreign keys
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
+    image_id = Column(UUID(as_uuid=True), ForeignKey('images.id', ondelete='SET NULL'), nullable=True)
 
     # Container information
     name = Column(String(255), nullable=False)
-    image = Column(String(500), nullable=False)
     status = Column(Enum(ContainerStatus), nullable=False, default=ContainerStatus.STOPPED)
 
     # Resource limits
@@ -60,10 +60,12 @@ class Container(Base):
 
     # Relationships
     user = relationship("User", back_populates="containers")
+    image_ref = relationship("Image", back_populates="containers")
 
     # Indexes and constraints
     __table_args__ = (
         Index('idx_container_user_id', user_id),
+        Index('idx_container_image_id', image_id),
         Index('idx_container_status', status),
         Index('idx_container_user_status', user_id, status),
         Index('idx_container_deleted_at', deleted_at),
@@ -75,8 +77,8 @@ class Container(Base):
         return {
             "id": str(self.id),
             "user_id": str(self.user_id),
+            "image_id": str(self.image_id) if self.image_id else None,
             "name": self.name,
-            "image": self.image,
             "status": self.status.value if self.status else None,
             "cpu_limit": self.cpu_limit,
             "memory_limit": self.memory_limit,

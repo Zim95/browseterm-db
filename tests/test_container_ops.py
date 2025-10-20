@@ -16,6 +16,7 @@ from browseterm_db.common.config import DBConfig
 from browseterm_db.migrations.migrator import Migrator
 from browseterm_db.common.config import TEST_MIGRATIONS_DIR
 from browseterm_db.operations.container_ops import ContainerOps
+from browseterm_db.operations.image_ops import ImageOps
 from browseterm_db.operations.user_ops import UserOps
 from browseterm_db.models.users import AuthProvider
 from browseterm_db.operations import OperationResult
@@ -64,7 +65,12 @@ class TestContainerOps(TestCase):
             database=os.getenv('TEST_DB_DATABASE')
         )
         self.container_ops: ContainerOps = ContainerOps(self.db_config)
+        self.image_ops: ImageOps = ImageOps(self.db_config)
         self.user_ops: UserOps = UserOps(self.db_config)
+
+    def tearDown(self) -> None:
+        """Clean up all images after each test"""
+        self.image_ops.delete_many({})
 
     def test_1_simple_container_creation_with_field_verification(self) -> None:
         '''
@@ -85,11 +91,21 @@ class TestContainerOps(TestCase):
         self.assertTrue(user_result.success, "User creation should succeed")
         user_id: str = user_result.data["id"]
 
+        # create an image
+        image_data: dict = {
+            "name": "python:3.12-slim",
+            "image": "docker.io/library/python:3.12-slim",
+            "is_active": True
+        }
+        image_result: OperationResult = self.image_ops.insert(image_data)
+        self.assertTrue(image_result.success, "Image creation should succeed")
+        image_id: str = image_result.data["id"]
+
         # create a container
         container_data: dict = {
             "user_id": user_id,
+            "image_id": image_id,
             "name": "test-container",
-            "image": "python:3.12-slim",
             "status": ContainerStatus.RUNNING
         }
         container_result: OperationResult = self.container_ops.insert(container_data)
@@ -97,8 +113,8 @@ class TestContainerOps(TestCase):
         self.assertTrue(container_result.success, "Container creation should succeed")
         # verify the container is created with the correct fields
         self.assertEqual(container_result.data["user_id"], user_id)
+        self.assertEqual(container_result.data["image_id"], image_id)
         self.assertEqual(container_result.data["name"], container_data["name"])
-        self.assertEqual(container_result.data["image"], container_data["image"])
         self.assertEqual(container_result.data["status"], container_data["status"].value)
         self.assertEqual(container_result.data["cpu_limit"], '1')  # default value should be 1
         self.assertEqual(container_result.data["memory_limit"], '1GB')  # default value should be 1GB
@@ -121,15 +137,28 @@ class TestContainerOps(TestCase):
         Test case 2: Create container with invalid user should fail.
         '''
         print('test_2_container_creation_with_invalid_user_should_fail: ', end="")
+        # Create an image
+        image_data: dict = {
+            "name": "python:3.12-slim",
+            "image": "docker.io/library/python:3.12-slim",
+            "is_active": True
+        }
+        image_result: OperationResult = self.image_ops.insert(image_data)
+        self.assertTrue(image_result.success, "Image creation should succeed")
+        image_id: str = image_result.data["id"]
+
         # Create a container with invalid user
         container_data: dict = {
             "user_id": "invalid_user_id",
+            "image_id": image_id,
             "name": "test-container",
-            "image": "python:3.12-slim",
             "status": ContainerStatus.RUNNING
         }
         container_result: OperationResult = self.container_ops.insert(container_data)
         self.assertFalse(container_result.success, "Container creation should fail")
+
+        # Clean up image
+        self.image_ops.delete({"id": image_id})
         print('OK')
 
     def test_3_duplicate_container_creation_should_fail(self) -> None:
@@ -139,8 +168,8 @@ class TestContainerOps(TestCase):
         print('test_3_duplicate_container_creation_should_fail: ', end="")
         # Create a user
         user_data: dict = {
-            "email": "duplicate@example.com", 
-            "provider": AuthProvider.GOOGLE, 
+            "email": "duplicate@example.com",
+            "provider": AuthProvider.GOOGLE,
             "provider_id": "google_456",
             "name": "Test User",
             "profile_picture_url": "https://example.com/profile.jpg",
@@ -150,11 +179,22 @@ class TestContainerOps(TestCase):
         # verify the user is created
         self.assertTrue(user_result.success, "User creation should succeed")
         user_id: str = user_result.data["id"]
+
+        # create an image
+        image_data: dict = {
+            "name": "python:3.12-slim",
+            "image": "docker.io/library/python:3.12-slim",
+            "is_active": True
+        }
+        image_result: OperationResult = self.image_ops.insert(image_data)
+        self.assertTrue(image_result.success, "Image creation should succeed")
+        image_id: str = image_result.data["id"]
+
         # create a container
         container_data: dict = {
             "user_id": user_id,
+            "image_id": image_id,
             "name": "test-container",
-            "image": "python:3.12-slim",
             "status": ContainerStatus.RUNNING
         }
         container_result: OperationResult = self.container_ops.insert(container_data)
@@ -189,11 +229,22 @@ class TestContainerOps(TestCase):
         # verify the user is created
         self.assertTrue(user_result.success, "User creation should succeed")
         user_id: str = user_result.data["id"]
+
+        # create an image
+        image_data: dict = {
+            "name": "python:3.12-slim",
+            "image": "docker.io/library/python:3.12-slim",
+            "is_active": True
+        }
+        image_result: OperationResult = self.image_ops.insert(image_data)
+        self.assertTrue(image_result.success, "Image creation should succeed")
+        image_id: str = image_result.data["id"]
+
         # create a container with invalid status
         container_data: dict = {
             "user_id": user_id,
+            "image_id": image_id,
             "name": "test-container",
-            "image": "python:3.12-slim",
             "status": "Invalid"
         }
         container_result: OperationResult = self.container_ops.insert(container_data)
@@ -211,8 +262,8 @@ class TestContainerOps(TestCase):
         print('test_5_container_delete_should_not_delete_user: ', end="")
         # Create a user
         user_data: dict = {
-            "email": "delete_user@example.com", 
-            "provider": AuthProvider.GOOGLE, 
+            "email": "delete_user@example.com",
+            "provider": AuthProvider.GOOGLE,
             "provider_id": "google_456",
             "name": "Test User",
             "profile_picture_url": "https://example.com/profile.jpg",
@@ -222,11 +273,22 @@ class TestContainerOps(TestCase):
         # verify the user is created
         self.assertTrue(user_result.success, "User creation should succeed")
         user_id: str = user_result.data["id"]
+
+        # create an image
+        image_data: dict = {
+            "name": "python:3.12-slim",
+            "image": "docker.io/library/python:3.12-slim",
+            "is_active": True
+        }
+        image_result: OperationResult = self.image_ops.insert(image_data)
+        self.assertTrue(image_result.success, "Image creation should succeed")
+        image_id: str = image_result.data["id"]
+
         # create a container
         container_data: dict = {
             "user_id": user_id,
+            "image_id": image_id,
             "name": "test-container",
-            "image": "python:3.12-slim",
             "status": ContainerStatus.RUNNING
         }
         container_result: OperationResult = self.container_ops.insert(container_data)

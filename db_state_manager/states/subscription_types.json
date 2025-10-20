@@ -1,0 +1,39 @@
+[
+    {
+        "name": "Free Plan",
+        "type": "free",
+        "amount": 0,
+        "currency": "INR",
+        "duration_days": 365,
+        "max_containers": 1,
+        "cpu_limit_per_container": "1",
+        "memory_limit_per_container": "1GB",
+        "description": "Free plan with basic container limits",
+        "is_active": true
+    },
+    {
+        "name": "Basic Plan",
+        "type": "basic",
+        "amount": 100,
+        "currency": "INR",
+        "duration_days": 30,
+        "max_containers": 5,
+        "cpu_limit_per_container": "1",
+        "memory_limit_per_container": "1GB",
+        "description": "Basic plan with increased container limits",
+        "is_active": true
+    },
+    {
+        "name": "Pro Plan",
+        "type": "pro",
+        "amount": 500,
+        "currency": "INR",
+        "duration_days": 30,
+        "max_containers": 30,
+        "cpu_limit_per_container": "Configurable",
+        "memory_limit_per_container": "Configurable",
+        "description": "Pro plan with configurable resources",
+        "is_active": false,
+        "extra_message": "coming soon"
+    }
+]

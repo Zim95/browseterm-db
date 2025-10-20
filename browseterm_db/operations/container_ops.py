@@ -30,6 +30,7 @@ class ContainerOps(DBOperations):
         """Convert filter values to appropriate types"""
         filter_conversion_map: dict = {
             'user_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
+            'image_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
         }
         if key in filter_conversion_map:
             return filter_conversion_map[key](value)
@@ -40,6 +41,7 @@ class ContainerOps(DBOperations):
         update_conversion_map: dict = {
             'status': lambda value: value if isinstance(value, ContainerStatus) else ContainerStatus(value),
             'user_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
+            'image_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
         }
         if key in update_conversion_map:
             return update_conversion_map[key](value)
@@ -50,6 +52,7 @@ class ContainerOps(DBOperations):
         insert_conversion_map: dict = {
             'status': lambda value: value if isinstance(value, ContainerStatus) else ContainerStatus(value),
             'user_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
+            'image_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
         }
         if key in insert_conversion_map:
             return insert_conversion_map[key](value)
@@ -125,13 +128,15 @@ class ContainerOps(DBOperations):
             session: Session = self._get_session()
             # Convert user_id to UUID if it's a string
             user_id: uuid.UUID = uuid.UUID(data.get('user_id')) if isinstance(data.get('user_id'), str) else data.get('user_id')
+            # Convert image_id to UUID if it's a string
+            image_id: uuid.UUID | None = uuid.UUID(data.get('image_id')) if isinstance(data.get('image_id'), str) else data.get('image_id')
             # Handle status enum
             status: ContainerStatus = ContainerStatus(data.get('status', ContainerStatus.STOPPED)) if isinstance(data.get('status'), str) else data.get('status')
             # Create container instance
             container: Container = Container(
                 user_id=user_id,
+                image_id=image_id,
                 name=data.get('name'),
-                image=data.get('image'),
                 status=status,
                 cpu_limit=data.get('cpu_limit', DEFAULT_CPU_LIMIT),
                 memory_limit=data.get('memory_limit', DEFAULT_MEMORY_LIMIT),
@@ -169,11 +174,12 @@ class ContainerOps(DBOperations):
             containers: List[Container] = []
             for data in data_list:
                 user_id: uuid.UUID = uuid.UUID(data.get('user_id')) if isinstance(data.get('user_id'), str) else data.get('user_id')
+                image_id: uuid.UUID | None = uuid.UUID(data.get('image_id')) if isinstance(data.get('image_id'), str) else data.get('image_id')
                 status: ContainerStatus = ContainerStatus(data.get('status', ContainerStatus.STOPPED)) if isinstance(data.get('status'), str) else data.get('status')
                 container: Container = Container(
                     user_id=user_id,
+                    image_id=image_id,
                     name=data.get('name'),
-                    image=data.get('image'),
                     status=status,
                     cpu_limit=data.get('cpu_limit', DEFAULT_CPU_LIMIT),
                     memory_limit=data.get('memory_limit', DEFAULT_MEMORY_LIMIT),

@@ -1,0 +1,7 @@
+[
+    {
+        "name": "Ubuntu",
+        "image": "zim95/ssh_ubuntu:latest",
+        "is_active": true
+    }
+]
