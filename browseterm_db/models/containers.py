@@ -21,11 +21,12 @@ DEFAULT_MEMORY_LIMIT: str = '1GB'
 
 
 class ContainerStatus(enum.Enum):
-    """Container status enum"""
+    """Container status enum - Kubernetes pod phases"""
+    PENDING = "Pending"
     RUNNING = "Running"
-    STOPPED = "Stopped"
+    SUCCEEDED = "Succeeded"
     FAILED = "Failed"
-    DELETED = "Deleted"
+    UNKNOWN = "Unknown"
 
 
 class Container(Base):
@@ -43,7 +44,7 @@ class Container(Base):
 
     # Container information
     name = Column(String(255), nullable=False)
-    status = Column(Enum(ContainerStatus), nullable=False, default=ContainerStatus.STOPPED)
+    status = Column(Enum(ContainerStatus), nullable=False, default=ContainerStatus.PENDING)
 
     # Resource limits
     cpu_limit = Column(String(20), nullable=False, default='1')  # e.g., "1.0"
@@ -58,6 +59,17 @@ class Container(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     deleted_at = Column(DateTime, nullable=True)  # Soft delete
+
+    '''
+    Operational Fields:
+    -------------------
+    1. We need kubernetes_id because we first make an entry to the database and then get the kubernetes ID from the kubernetes API.
+        This is to ensure better user experience.
+    2. We need saved_image because, sometimes, our container might go down without the user knowing.
+        We would need to restore the container from the saved image and update the kubernetes_id.
+    '''
+    kubernetes_id = Column(String(255), nullable=True)  # Kubernetes ID of the container
+    saved_image = Column(String(20), nullable=True)  # Saved image - if you have a saved image, we use this image directly.
 
     # Relationships
     user = relationship("User", back_populates="containers")
@@ -88,5 +100,7 @@ class Container(Base):
             "environment_vars": self.environment_vars,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
-            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
+            "kubernetes_id": self.kubernetes_id,
+            "saved_image": self.saved_image
         }

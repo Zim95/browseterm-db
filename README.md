@@ -44,14 +44,22 @@ SQLAlchemy ORM library setup. Handles migrations as well.
    DO NOT DO THIS: The tests require setup. Running them individually will fail.
 
 
-# Initial Setup
+# Working with Migrations
 - If this is your first time setting up browsetermdb. Run the `init.py` file.
    ```bash
    $ python init.py
    ```
 
-# Upgrading Migrations
-- If you want to create an upgrade in the migration.
+- If you want to create and apply the migration.
    ```bash
    $ python upgrade.py <message>
+   ```
+
+- If you want to only create the migration file without applying.
+   ```bash
+   $ python upgrade.py create <message>
+   ```
+   Make the edits in your migration file, then hit:
+   ```bash
+   $ python upgrade.py upgrade
    ```

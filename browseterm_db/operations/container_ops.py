@@ -131,7 +131,7 @@ class ContainerOps(DBOperations):
             # Convert image_id to UUID if it's a string
             image_id: uuid.UUID | None = uuid.UUID(data.get('image_id')) if isinstance(data.get('image_id'), str) else data.get('image_id')
             # Handle status enum
-            status: ContainerStatus = ContainerStatus(data.get('status', ContainerStatus.STOPPED)) if isinstance(data.get('status'), str) else data.get('status')
+            status: ContainerStatus = ContainerStatus(data.get('status', ContainerStatus.PENDING)) if isinstance(data.get('status'), str) else data.get('status')
             # Create container instance
             container: Container = Container(
                 user_id=user_id,
@@ -176,7 +176,7 @@ class ContainerOps(DBOperations):
             for data in data_list:
                 user_id: uuid.UUID = uuid.UUID(data.get('user_id')) if isinstance(data.get('user_id'), str) else data.get('user_id')
                 image_id: uuid.UUID | None = uuid.UUID(data.get('image_id')) if isinstance(data.get('image_id'), str) else data.get('image_id')
-                status: ContainerStatus = ContainerStatus(data.get('status', ContainerStatus.STOPPED)) if isinstance(data.get('status'), str) else data.get('status')
+                status: ContainerStatus = ContainerStatus(data.get('status', ContainerStatus.PENDING)) if isinstance(data.get('status'), str) else data.get('status')
                 container: Container = Container(
                     user_id=user_id,
                     image_id=image_id,

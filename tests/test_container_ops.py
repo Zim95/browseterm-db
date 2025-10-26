@@ -125,6 +125,8 @@ class TestContainerOps(TestCase):
         self.assertEqual(container_result.data["created_at"] is not None, True)  # created_at should be not None
         self.assertEqual(container_result.data["updated_at"] is not None, True)  # updated_at should be not None
         self.assertEqual(container_result.data["deleted_at"], None)  # deleted_at should be None
+        self.assertEqual(container_result.data["kubernetes_id"], None)  # kubernetes_id should be None by default
+        self.assertEqual(container_result.data["saved_image"], None)  # saved_image should be None by default
         # delete the user
         delete_result: OperationResult = self.user_ops.delete({"id": user_id})
         self.assertTrue(delete_result.success, "User deletion should succeed")
