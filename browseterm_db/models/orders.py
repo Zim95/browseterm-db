@@ -99,7 +99,7 @@ class Orders(Base):
             "user_id": str(self.user_id),
             "subscription_id": str(self.subscription_id) if self.subscription_id else None,
             "subscription_type_id": str(self.subscription_type_id),
-            "amount": float(self.amount),
+            "amount": f"{self.amount:.2f}",  # Format with 2 decimal places
             "currency": self.currency.value if self.currency else None,
             "status": self.status.value if self.status else None,
             "payment_method": self.payment_method,

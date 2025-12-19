@@ -123,7 +123,7 @@ class TestOrderOps(TestCase):
         self.assertEqual(order_result.data["user_id"], user_id)
         self.assertEqual(order_result.data["subscription_type_id"], subscription_type_id)
         self.assertEqual(order_result.data["subscription_id"], None)  # Should be None initially
-        self.assertEqual(order_result.data["amount"], 999.0)
+        self.assertEqual(order_result.data["amount"], "999.00")
         self.assertEqual(order_result.data["currency"], OrdersCurrency.INR.value)
         self.assertEqual(order_result.data["status"], OrderStatus.PENDING.value)
         self.assertEqual(order_result.data["payment_method"], "stripe")

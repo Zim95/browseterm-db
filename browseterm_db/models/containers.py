@@ -17,7 +17,8 @@ from browseterm_db.models import Base
 
 
 DEFAULT_CPU_LIMIT: str = '1'
-DEFAULT_MEMORY_LIMIT: str = '1GB'
+DEFAULT_MEMORY_LIMIT: str = '1Gi'
+DEFAULT_STORAGE_LIMIT: str = '2Gi'
 
 
 class ContainerStatus(enum.Enum):
@@ -48,12 +49,14 @@ class Container(Base):
 
     # Resource limits
     cpu_limit = Column(String(20), nullable=False, default='1')  # e.g., "1.0"
-    memory_limit = Column(String(20), nullable=False, default='1GB')  # e.g., "1GB"
+    memory_limit = Column(String(20), nullable=False, default='1Gi')  # e.g., "1GB"
+    storage_limit = Column(String(20), nullable=False, default='2Gi')  # e.g., "2GB"
 
     # Configuration
     ip_address = Column(String(20), nullable=True)  # IP address of the container
     port_mappings = Column(JSON, nullable=True)  # Port configuration as JSON
     environment_vars = Column(JSON, nullable=True)  # Environment variables as JSON
+    associated_resources = Column(JSON, nullable=True)  # Resources assigned to the container as JSON
 
     # Timestamps
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
@@ -95,9 +98,11 @@ class Container(Base):
             "status": self.status.value if self.status else None,
             "cpu_limit": self.cpu_limit,
             "memory_limit": self.memory_limit,
+            "storage_limit": self.storage_limit,
             "ip_address": self.ip_address,
             "port_mappings": self.port_mappings,
             "environment_vars": self.environment_vars,
+            "associated_resources": self.associated_resources,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,

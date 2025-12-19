@@ -90,7 +90,8 @@ class TestSubscriptionTypeOps(TestCase):
             "extra_message": "test extra message",
             "max_containers": 5,
             "cpu_limit_per_container": "2",
-            "memory_limit_per_container": "4GB",
+            "memory_limit_per_container": "4Gi",
+            "storage_limit_per_container": "4Gi",
             "description": "Premium subscription plan with enhanced features",
             "is_active": True
         }
@@ -99,13 +100,14 @@ class TestSubscriptionTypeOps(TestCase):
         # Verify all fields
         self.assertEqual(sub_type_result.data["name"], subscription_type_data["name"])
         self.assertEqual(sub_type_result.data["type"], subscription_type_data["type"])
-        self.assertEqual(sub_type_result.data["amount"], float(subscription_type_data["amount"]))
+        self.assertEqual(sub_type_result.data["amount"], str(subscription_type_data["amount"]) + ".00")
         self.assertEqual(sub_type_result.data["currency"], subscription_type_data["currency"])
         self.assertEqual(sub_type_result.data["duration_days"], subscription_type_data["duration_days"])
         self.assertEqual(sub_type_result.data["extra_message"], subscription_type_data["extra_message"])
         self.assertEqual(sub_type_result.data["max_containers"], subscription_type_data["max_containers"])
         self.assertEqual(sub_type_result.data["cpu_limit_per_container"], subscription_type_data["cpu_limit_per_container"])
         self.assertEqual(sub_type_result.data["memory_limit_per_container"], subscription_type_data["memory_limit_per_container"])
+        self.assertEqual(sub_type_result.data["storage_limit_per_container"], subscription_type_data["storage_limit_per_container"])
         self.assertEqual(sub_type_result.data["description"], subscription_type_data["description"])
         self.assertEqual(sub_type_result.data["is_active"], subscription_type_data["is_active"])
         self.assertEqual(sub_type_result.data["created_at"] is not None, True)
@@ -140,7 +142,8 @@ class TestSubscriptionTypeOps(TestCase):
             "duration_days": 30,
             "max_containers": 2,
             "cpu_limit_per_container": "1",
-            "memory_limit_per_container": "2GB",
+            "memory_limit_per_container": "2Gi",
+            "storage_limit_per_container": "2Gi",
             "description": "Test subscription plan",
             "is_active": True
         }
@@ -210,7 +213,8 @@ class TestSubscriptionTypeOps(TestCase):
             "duration_days": 30,
             "max_containers": 3,
             "cpu_limit_per_container": "1.5",
-            "memory_limit_per_container": "3GB",
+            "memory_limit_per_container": "3Gi",
+            "storage_limit_per_container": "3Gi",
             "description": "Duplicate test plan",
             "is_active": True
         }
@@ -237,7 +241,8 @@ class TestSubscriptionTypeOps(TestCase):
             "duration_days": 30,
             "max_containers": 1,
             "cpu_limit_per_container": "1",
-            "memory_limit_per_container": "1GB",
+            "memory_limit_per_container": "3Gi",
+            "storage_limit_per_container": "3Gi",
             "description": "Plan with invalid currency",
             "is_active": True
         }
@@ -259,7 +264,8 @@ class TestSubscriptionTypeOps(TestCase):
             "duration_days": 30,
             "max_containers": 1,
             "cpu_limit_per_container": "1",
-            "memory_limit_per_container": "1GB",
+            "memory_limit_per_container": "1Gi",
+            "storage_limit_per_container": "3Gi",
             "description": "Plan for soft delete test",
             "is_active": True
         }
@@ -296,7 +302,8 @@ class TestSubscriptionTypeOps(TestCase):
         self.assertEqual(sub_type_result.data["currency"], SubscriptionTypeCurrency.INR.value)  # default currency
         self.assertEqual(sub_type_result.data["max_containers"], 1)  # default max_containers
         self.assertEqual(sub_type_result.data["cpu_limit_per_container"], "1")  # default cpu_limit
-        self.assertEqual(sub_type_result.data["memory_limit_per_container"], "1GB")  # default memory_limit
+        self.assertEqual(sub_type_result.data["memory_limit_per_container"], "1Gi")  # default memory_limit
+        self.assertEqual(sub_type_result.data["storage_limit_per_container"], "2Gi")  # default storage_limit
         self.assertEqual(sub_type_result.data["is_active"], True)  # default is_active
         self.assertEqual(sub_type_result.data["description"], None)  # nullable field
         # Cleanup
@@ -329,7 +336,8 @@ class TestSubscriptionTypeOps(TestCase):
             "duration_days": 30,
             "max_containers": 2,
             "cpu_limit_per_container": "1",
-            "memory_limit_per_container": "2GB",
+            "memory_limit_per_container": "2Gi",
+            "storage_limit_per_container": "2Gi",
             "description": "Test subscription plan",
             "is_active": True
         }

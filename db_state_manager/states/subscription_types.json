@@ -7,7 +7,8 @@
         "duration_days": 365,
         "max_containers": 1,
         "cpu_limit_per_container": "1",
-        "memory_limit_per_container": "1GB",
+        "memory_limit_per_container": "1Gi",
+        "storage_limit_per_container": "2Gi",
         "description": "Free plan with basic container limits",
         "is_active": true
     },
@@ -19,7 +20,8 @@
         "duration_days": 30,
         "max_containers": 5,
         "cpu_limit_per_container": "1",
-        "memory_limit_per_container": "1GB",
+        "memory_limit_per_container": "1Gi",
+        "storage_limit_per_container": "2Gi",
         "description": "Basic plan with increased container limits",
         "is_active": true
     },
@@ -32,6 +34,7 @@
         "max_containers": 30,
         "cpu_limit_per_container": "Configurable",
         "memory_limit_per_container": "Configurable",
+        "storage_limit_per_container": "Configurable",
         "description": "Pro plan with configurable resources",
         "is_active": false,
         "extra_message": "coming soon"

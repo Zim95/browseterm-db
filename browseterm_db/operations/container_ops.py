@@ -15,7 +15,7 @@ from sqlalchemy.orm import Query
 # local
 from browseterm_db.models.containers import Container, ContainerStatus
 from browseterm_db.operations import DBOperations, OperationResult
-from browseterm_db.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT
+from browseterm_db.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT, DEFAULT_STORAGE_LIMIT
 
 
 logger = logging.getLogger(__name__)
@@ -140,9 +140,11 @@ class ContainerOps(DBOperations):
                 status=status,
                 cpu_limit=data.get('cpu_limit', DEFAULT_CPU_LIMIT),
                 memory_limit=data.get('memory_limit', DEFAULT_MEMORY_LIMIT),
+                storage_limit=data.get('storage_limit', DEFAULT_STORAGE_LIMIT),
                 ip_address=data.get('ip_address'),
                 port_mappings=data.get('port_mappings'),
-                environment_vars=data.get('environment_vars')
+                environment_vars=data.get('environment_vars'),
+                associated_resources=data.get('associated_resources')
             )
             session.add(container)
             session.flush()  # Get the ID without committing
@@ -184,9 +186,11 @@ class ContainerOps(DBOperations):
                     status=status,
                     cpu_limit=data.get('cpu_limit', DEFAULT_CPU_LIMIT),
                     memory_limit=data.get('memory_limit', DEFAULT_MEMORY_LIMIT),
+                    storage_limit=data.get('storage_limit', DEFAULT_STORAGE_LIMIT),
                     ip_address=data.get('ip_address'),
                     port_mappings=data.get('port_mappings'),
-                    environment_vars=data.get('environment_vars')
+                    environment_vars=data.get('environment_vars'),
+                    associated_resources=data.get('associated_resources')
                 )
                 containers.append(container)
             session.add_all(containers)

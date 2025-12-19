@@ -43,7 +43,8 @@ class SubscriptionType(Base):
     # Limits
     max_containers = Column(Integer, nullable=False, default=1)
     cpu_limit_per_container = Column(String(20), nullable=False, default="1")  # e.g., "1.0"
-    memory_limit_per_container = Column(String(20), nullable=False, default="1GB")  # e.g., "1GB"
+    memory_limit_per_container = Column(String(20), nullable=False, default="1Gi")  # e.g., "1Gi"
+    storage_limit_per_container = Column(String(20), nullable=False, default="2Gi")  # e.g., "2Gi"
 
     # Description and status
     description = Column(Text, nullable=True)
@@ -70,13 +71,14 @@ class SubscriptionType(Base):
             "id": str(self.id),
             "name": self.name,
             "type": self.type,
-            "amount": float(self.amount),
+            "amount": f"{self.amount:.2f}",  # Format with 2 decimal places
             "currency": self.currency.value if self.currency else None,
             "duration_days": self.duration_days,
             "extra_message": self.extra_message,
             "max_containers": self.max_containers,
             "cpu_limit_per_container": self.cpu_limit_per_container,
             "memory_limit_per_container": self.memory_limit_per_container,
+            "storage_limit_per_container": self.storage_limit_per_container,
             "description": self.description,
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,

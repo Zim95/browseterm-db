@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session, Query
 # local
 from browseterm_db.models.subscription_types import SubscriptionType, SubscriptionTypeCurrency
 from browseterm_db.operations import DBOperations, OperationResult
-from browseterm_db.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT
+from browseterm_db.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT, DEFAULT_STORAGE_LIMIT
 
 
 logger = logging.getLogger(__name__)
@@ -142,6 +142,7 @@ class SubscriptionTypeOps(DBOperations):
                 max_containers=data.get('max_containers', 1),
                 cpu_limit_per_container=data.get('cpu_limit_per_container', DEFAULT_CPU_LIMIT),
                 memory_limit_per_container=data.get('memory_limit_per_container', DEFAULT_MEMORY_LIMIT),
+                storage_limit_per_container=data.get('storage_limit_per_container', DEFAULT_STORAGE_LIMIT),
                 description=data.get('description'),
                 is_active=data.get('is_active', True)
             )
@@ -185,6 +186,7 @@ class SubscriptionTypeOps(DBOperations):
                     max_containers=data.get('max_containers', 1),
                     cpu_limit_per_container=data.get('cpu_limit_per_container', DEFAULT_CPU_LIMIT),
                     memory_limit_per_container=data.get('memory_limit_per_container', DEFAULT_MEMORY_LIMIT),
+                    storage_limit_per_container=data.get('storage_limit_per_container', DEFAULT_STORAGE_LIMIT),
                     description=data.get('description'),
                     is_active=data.get('is_active', True)
                 )

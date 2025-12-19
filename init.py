@@ -5,15 +5,16 @@ Here we setup initial migrations for the project.
 # builtins
 from dotenv import load_dotenv
 import os
-from typing import List, Dict, Any
 
 # local
 from browseterm_db.common.config import DBConfig
 from browseterm_db.migrations.migrator import Migrator
 from browseterm_db.common.config import MIGRATIONS_DIR
-from browseterm_db.operations.subscription_type_ops import SubscriptionTypeOps
-from browseterm_db.models.subscription_types import SubscriptionTypeCurrency
-from browseterm_db.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT
+from db_state_manager.state_manager import (
+    DBStateManager,
+    update_subscription_types,
+    update_images
+)
 
 # load the environment variables
 load_dotenv('.env')
@@ -35,7 +36,7 @@ class SetupInitialMigrations():
         self.migrator.reset_database()  # reset the database
         # delete all files in the versions directory
         self.migrator.reset_migrations()
-        self.subscription_type_ops: SubscriptionTypeOps = SubscriptionTypeOps(self.db_config)
+        self.db_state_manager: DBStateManager = DBStateManager(self.db_config)
 
     def setup(self) -> None:
         '''
@@ -46,49 +47,12 @@ class SetupInitialMigrations():
         # upgrade the database
         self.migrator.upgrade()
 
-        # create default subscription types
-        self.default_subscription_types: List[Dict[str, Any]] = [
-            {
-                "name": "Free Plan",
-                "type": "free",
-                "amount": 0,
-                "currency": SubscriptionTypeCurrency.INR,
-                "duration_days": 365,  # 1 year
-                "max_containers": 1,
-                "cpu_limit_per_container": DEFAULT_CPU_LIMIT,
-                "memory_limit_per_container": DEFAULT_MEMORY_LIMIT,
-                "description": "Free plan with basic container limits",
-                "is_active": True,
-                "extra_message": None,
-            },
-            {
-                "name": "Basic Plan",
-                "type": "basic",
-                "amount": 100,
-                "currency": SubscriptionTypeCurrency.INR,
-                "duration_days": 30,  # 1 month
-                "max_containers": 5,
-                "cpu_limit_per_container": DEFAULT_CPU_LIMIT,
-                "memory_limit_per_container": DEFAULT_MEMORY_LIMIT,
-                "description": "Basic plan with increased container limits",
-                "is_active": True,
-                "extra_message": None,
-            },
-            {
-                "name": "Pro Plan",
-                "type": "pro",
-                "amount": 500,
-                "currency": SubscriptionTypeCurrency.INR,
-                "duration_days": 30,  # 1 month
-                "max_containers": 30,
-                "cpu_limit_per_container": 'Configurable',
-                "memory_limit_per_container": 'Configurable',
-                "description": "Basic plan with increased container limits",
-                "is_active": False,
-                "extra_message": "coming soon",
-            }
-        ]
-        self.subscription_type_ops.insert_many(self.default_subscription_types)
+        # seed data from JSON files
+        print("Creating subscription types from JSON...")
+        update_subscription_types(self.db_state_manager)
+        print("Creating images from JSON...")
+        update_images(self.db_state_manager)
+        print("Database seeding complete.")
 
 
 if __name__ == "__main__":

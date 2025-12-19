@@ -118,10 +118,12 @@ class TestContainerOps(TestCase):
         self.assertEqual(container_result.data["name"], container_data["name"])
         self.assertEqual(container_result.data["status"], container_data["status"].value)
         self.assertEqual(container_result.data["cpu_limit"], '1')  # default value should be 1
-        self.assertEqual(container_result.data["memory_limit"], '1GB')  # default value should be 1GB
+        self.assertEqual(container_result.data["memory_limit"], '1Gi')  # default value should be 1Gi
+        self.assertEqual(container_result.data["storage_limit"], '2Gi')  # default value should be 2Gi
         self.assertEqual(container_result.data["ip_address"], "127.0.0.1")  # should match the provided value
         self.assertEqual(container_result.data["port_mappings"], None)  # default value should be None
         self.assertEqual(container_result.data["environment_vars"], None)  # default value should be None
+        self.assertEqual(container_result.data["associated_resources"], None)  # default value should be None
         self.assertEqual(container_result.data["created_at"] is not None, True)  # created_at should be not None
         self.assertEqual(container_result.data["updated_at"] is not None, True)  # updated_at should be not None
         self.assertEqual(container_result.data["deleted_at"], None)  # deleted_at should be None
