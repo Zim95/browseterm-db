@@ -1,6 +1,24 @@
 # Browseterm DB
 SQLAlchemy ORM library setup. Handles migrations as well.
 
+# PreRequisites
+1. Python - 3.11
+   To install on a mac. First download and install `python3.11`:
+   ```bash
+   $ brew install python@3.11
+   ```
+   Once installed get the path of python3.11:
+   ```bash
+   $ which python3.11
+   ```
+   Note this path down.
+
+2. Poetry
+   To install poetry on a mac.
+   ```bash
+   $ brew install poetry
+   ```
+
 # Setting up
 - To use this library simply install it.
    ```bash
@@ -19,6 +37,11 @@ SQLAlchemy ORM library setup. Handles migrations as well.
 
 - Create an `.env` file at the root of the directory with the following values:
    ```text
+   DB_USERNAME=<username>
+   DB_PASSWORD=<password>
+   DB_HOST=<host>
+   DB_PORT=<port>
+   DB_DATABASE=<db_name>
    TEST_DB_USERNAME=<username>
    TEST_DB_PASSWORD=<password>
    TEST_DB_HOST=<host>
@@ -62,4 +85,18 @@ SQLAlchemy ORM library setup. Handles migrations as well.
    Make the edits in your migration file, then hit:
    ```bash
    $ python upgrade.py upgrade
+   ```
+
+# Setting up the Database
+1. Clone this repository.
+2. Install the virtual environment and activate it.
+3. Then hit upgrade:
+   ```bash
+   $ python upgrade.py upgrade
+   ```
+   This will create all your models and apply all the existing migrations that we have.
+
+4. Then call state manager to maintain state.
+   ```bash
+   $ python db_state_manager/state_manager.py
    ```
