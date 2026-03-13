@@ -6,6 +6,11 @@ authors = ["Zim95 <shresthanamah@gmail.com>"]
 license = "Apache 2.0"
 readme = "README.md"
 packages = [{include="browseterm_db"}]
+include = [
+    "browseterm_db/migrations/alembic.ini",
+    "browseterm_db/migrations/env.py",
+    "browseterm_db/migrations/script.py.mako",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
