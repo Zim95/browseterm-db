@@ -50,6 +50,10 @@ SQLAlchemy ORM library setup. Handles migrations as well.
    ```
    Make sure a database with this connection configuration exists. Do not use quotations in the values. Do not add spaces around =.
 
+   > Note: Only the `DB_*` variables are needed for migrations and seeding (`init.py` / `upgrade.py`). The `TEST_DB_*` variables are used **only** for running the test suite.
+   >
+   > `DB_HOST=localhost` works when you port-forward the Postgres service: `kubectl port-forward service/browseterm-pg-service -n browseterm 5432:5432`.
+
 - To run all the tests:
    ```bash
    $ python -m unittest discover -s ./tests/ -p "test_*.py"
@@ -72,6 +76,7 @@ SQLAlchemy ORM library setup. Handles migrations as well.
    ```bash
    $ python init.py
    ```
+   > ⚠️ **DESTRUCTIVE — FIRST-TIME SETUP ONLY.** `init.py` **drops all existing tables and enums**, then creates the initial migration, upgrades the database, AND seeds `subscription_types` + `images`. Run this only on a fresh/empty database. For an **existing** database, DO NOT run `init.py` — use the non-destructive `python upgrade.py upgrade` instead.
 
 - If you want to create and apply the migration.
    ```bash
@@ -100,3 +105,4 @@ SQLAlchemy ORM library setup. Handles migrations as well.
    ```bash
    $ python db_state_manager/state_manager.py
    ```
+   > Note: `init.py` already runs the seeding step, so if you set up via `init.py` this call is optional (it is idempotent).
