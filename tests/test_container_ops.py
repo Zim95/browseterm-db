@@ -9,6 +9,7 @@ Here in tests, we want to test the following:
 
 from dotenv import load_dotenv
 from unittest import TestCase
+from datetime import datetime, timezone
 import os
 
 # local
@@ -342,6 +343,133 @@ class TestSaveStatusEnum(TestCase):
             {s.value for s in SaveStatus},
             {"None", "Pending", "Running", "Succeeded", "Failed"}
         )
+        print('OK')
+
+
+class TestContainerSaveStatusUpdates(TestCase):
+    '''
+    Integration tests for the save/snapshot status lifecycle on the containers table.
+
+    Exercises the real save_status/saved_image/save_error/last_saved_at columns through
+    ContainerOps against the test database: None -> Pending -> Running -> Succeeded (with a
+    saved image + last_saved_at), and the Failed path (with a save_error).
+    '''
+    def setUp(self) -> None:
+        self.db_config: DBConfig = DBConfig(
+            username=os.getenv('TEST_DB_USERNAME'),
+            password=os.getenv('TEST_DB_PASSWORD'),
+            host=os.getenv('TEST_DB_HOST'),
+            port=int(os.getenv('TEST_DB_PORT')),
+            database=os.getenv('TEST_DB_DATABASE')
+        )
+        self.container_ops: ContainerOps = ContainerOps(self.db_config)
+        self.image_ops: ImageOps = ImageOps(self.db_config)
+        self.user_ops: UserOps = UserOps(self.db_config)
+
+    def tearDown(self) -> None:
+        # UserOps has no bulk delete; remove each created user by id (cascades to containers)
+        for user_id in getattr(self, '_user_ids', []):
+            self.user_ops.delete({"id": user_id})
+        self.image_ops.delete_many({})
+
+    def _make_container(self) -> str:
+        '''Create a user + image + container (with unique creds) and return the container id.'''
+        self._user_ids = getattr(self, '_user_ids', [])
+        n: int = len(self._user_ids) + 1
+        user_result: OperationResult = self.user_ops.insert({
+            "email": f"save{n}@example.com",
+            "provider": AuthProvider.GOOGLE,
+            "provider_id": f"google_save_{n}",
+            "name": "Save User",
+            "is_active": True,
+        })
+        self.assertTrue(user_result.success, "User creation should succeed")
+        self._user_ids.append(user_result.data["id"])
+        image_result: OperationResult = self.image_ops.insert({
+            "name": "python:3.12-slim",
+            "image": "docker.io/library/python:3.12-slim",
+            "is_active": True,
+        })
+        self.assertTrue(image_result.success, "Image creation should succeed")
+        container_result: OperationResult = self.container_ops.insert({
+            "user_id": user_result.data["id"],
+            "image_id": image_result.data["id"],
+            "name": "save-container",
+            "status": ContainerStatus.RUNNING,
+            "ip_address": "127.0.0.1",
+        })
+        self.assertTrue(container_result.success, "Container creation should succeed")
+        # defaults on creation
+        self.assertEqual(container_result.data["save_status"], SaveStatus.NONE.value)
+        self.assertIsNone(container_result.data["saved_image"])
+        self.assertIsNone(container_result.data["save_error"])
+        self.assertIsNone(container_result.data["last_saved_at"])
+        return container_result.data["id"]
+
+    def test_save_status_success_lifecycle(self) -> None:
+        '''None -> Pending -> Running -> Succeeded, persisting saved_image + last_saved_at.'''
+        print('test_save_status_success_lifecycle: ', end="")
+        container_id: str = self._make_container()
+
+        # Pending
+        result: OperationResult = self.container_ops.update(
+            filters={"id": container_id}, data={"save_status": SaveStatus.PENDING.value})
+        self.assertTrue(result.success, "Update to Pending should succeed")
+        self.assertEqual(
+            self.container_ops.find_one({"id": container_id}).data["save_status"], SaveStatus.PENDING.value)
+
+        # Running
+        self.container_ops.update(filters={"id": container_id}, data={"save_status": SaveStatus.RUNNING.value})
+        self.assertEqual(
+            self.container_ops.find_one({"id": container_id}).data["save_status"], SaveStatus.RUNNING.value)
+
+        # Succeeded: records the built image + a last_saved_at timestamp
+        saved_image: str = "zim95/save-container-image:latest"
+        saved_at: datetime = datetime.now(timezone.utc)
+        result = self.container_ops.update(filters={"id": container_id}, data={
+            "save_status": SaveStatus.SUCCEEDED.value,
+            "saved_image": saved_image,
+            "last_saved_at": saved_at,
+        })
+        self.assertTrue(result.success, "Update to Succeeded should succeed")
+        row: dict = self.container_ops.find_one({"id": container_id}).data
+        self.assertEqual(row["save_status"], SaveStatus.SUCCEEDED.value)
+        self.assertEqual(row["saved_image"], saved_image)
+        self.assertIsNotNone(row["last_saved_at"])
+        self.assertIsNone(row["save_error"])
+        print('OK')
+
+    def test_save_status_failed_records_error(self) -> None:
+        '''A failed save records Failed + a save_error message and leaves saved_image null.'''
+        print('test_save_status_failed_records_error: ', end="")
+        container_id: str = self._make_container()
+
+        self.container_ops.update(filters={"id": container_id}, data={"save_status": SaveStatus.PENDING.value})
+        error_message: str = "snapshot job failed: 403 Forbidden creating role"
+        result: OperationResult = self.container_ops.update(filters={"id": container_id}, data={
+            "save_status": SaveStatus.FAILED.value,
+            "save_error": error_message,
+        })
+        self.assertTrue(result.success, "Update to Failed should succeed")
+        row: dict = self.container_ops.find_one({"id": container_id}).data
+        self.assertEqual(row["save_status"], SaveStatus.FAILED.value)
+        self.assertEqual(row["save_error"], error_message)
+        self.assertIsNone(row["saved_image"])
+        print('OK')
+
+    def test_saved_image_accepts_long_name(self) -> None:
+        '''saved_image was widened to 255 chars; a long registry path must persist intact.'''
+        print('test_saved_image_accepts_long_name: ', end="")
+        container_id: str = self._make_container()
+        long_image: str = "registry.example.com/" + ("a" * 200) + "/img:latest"
+        self.assertLessEqual(len(long_image), 255)
+        result: OperationResult = self.container_ops.update(filters={"id": container_id}, data={
+            "save_status": SaveStatus.SUCCEEDED.value,
+            "saved_image": long_image,
+        })
+        self.assertTrue(result.success, "Update with a long saved_image should succeed")
+        row: dict = self.container_ops.find_one({"id": container_id}).data
+        self.assertEqual(row["saved_image"], long_image)
         print('OK')
 
 
