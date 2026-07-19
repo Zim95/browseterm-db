@@ -20,7 +20,7 @@ from browseterm_db.operations.image_ops import ImageOps
 from browseterm_db.operations.user_ops import UserOps
 from browseterm_db.models.users import AuthProvider
 from browseterm_db.operations import OperationResult
-from browseterm_db.models.containers import ContainerStatus
+from browseterm_db.models.containers import ContainerStatus, SaveStatus
 
 
 load_dotenv('.env')
@@ -129,6 +129,11 @@ class TestContainerOps(TestCase):
         self.assertEqual(container_result.data["deleted_at"], None)  # deleted_at should be None
         self.assertEqual(container_result.data["kubernetes_id"], None)  # kubernetes_id should be None by default
         self.assertEqual(container_result.data["saved_image"], None)  # saved_image should be None by default
+        # save/snapshot flow defaults
+        self.assertEqual(container_result.data["save_status"], SaveStatus.NONE.value)  # default should be "None"
+        self.assertEqual(container_result.data["save_status"], "None")  # SaveStatus.NONE has string value "None"
+        self.assertEqual(container_result.data["save_error"], None)  # save_error should be None by default
+        self.assertEqual(container_result.data["last_saved_at"], None)  # last_saved_at should be None by default
         # delete the user
         delete_result: OperationResult = self.user_ops.delete({"id": user_id})
         self.assertTrue(delete_result.success, "User deletion should succeed")
@@ -318,6 +323,25 @@ class TestContainerOps(TestCase):
         # delete the user
         delete_user_result: OperationResult = self.user_ops.delete({"id": user_id})
         self.assertTrue(delete_user_result.success, "User deletion should succeed")
+        print('OK')
+
+
+class TestSaveStatusEnum(TestCase):
+    '''
+    Test the SaveStatus enum values (no database required).
+    '''
+    def test_save_status_enum_values(self) -> None:
+        print('test_save_status_enum_values: ', end="")
+        self.assertEqual(SaveStatus.NONE.value, "None")
+        self.assertEqual(SaveStatus.PENDING.value, "Pending")
+        self.assertEqual(SaveStatus.RUNNING.value, "Running")
+        self.assertEqual(SaveStatus.SUCCEEDED.value, "Succeeded")
+        self.assertEqual(SaveStatus.FAILED.value, "Failed")
+        # exactly these five members
+        self.assertEqual(
+            {s.value for s in SaveStatus},
+            {"None", "Pending", "Running", "Succeeded", "Failed"}
+        )
         print('OK')
 
 

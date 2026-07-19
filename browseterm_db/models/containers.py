@@ -30,6 +30,15 @@ class ContainerStatus(enum.Enum):
     UNKNOWN = "Unknown"
 
 
+class SaveStatus(enum.Enum):
+    """Container save/snapshot operation status (stored as a string)"""
+    NONE = "None"
+    PENDING = "Pending"
+    RUNNING = "Running"
+    SUCCEEDED = "Succeeded"
+    FAILED = "Failed"
+
+
 class Container(Base):
     """
     Container model representing user containers
@@ -72,7 +81,12 @@ class Container(Base):
         We would need to restore the container from the saved image and update the kubernetes_id.
     '''
     kubernetes_id = Column(String(255), nullable=True)  # Kubernetes ID of the container
-    saved_image = Column(String(20), nullable=True)  # Saved image - if you have a saved image, we use this image directly.
+    saved_image = Column(String(255), nullable=True)  # Saved image - if you have a saved image, we use this image directly.
+
+    # Save/snapshot flow state
+    save_status = Column(String(20), nullable=False, default=SaveStatus.NONE.value)  # None/Pending/Running/Succeeded/Failed
+    save_error = Column(String(1000), nullable=True)  # Error detail if the last save failed
+    last_saved_at = Column(DateTime, nullable=True)  # When the container was last successfully saved
 
     # Relationships
     user = relationship("User", back_populates="containers")
@@ -107,5 +121,8 @@ class Container(Base):
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
             "kubernetes_id": self.kubernetes_id,
-            "saved_image": self.saved_image
+            "saved_image": self.saved_image,
+            "save_status": self.save_status,
+            "save_error": self.save_error,
+            "last_saved_at": self.last_saved_at.isoformat() if self.last_saved_at else None
         }

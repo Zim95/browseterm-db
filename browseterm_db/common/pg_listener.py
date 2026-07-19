@@ -15,6 +15,7 @@ import psycopg2.extensions
 
 # Channel names for pg_notify
 CONTAINER_STATUS_CHANGE_CHANNEL = "container_status_change"
+CONTAINER_SAVE_STATUS_CHANGE_CHANNEL = "container_save_status_change"
 
 
 @dataclass
@@ -37,6 +38,32 @@ class ContainerStatusChangePayload:
             name=data["name"],
             old_status=data["old_status"],
             new_status=data["new_status"],
+            updated_at=data["updated_at"]
+        )
+
+
+@dataclass
+class ContainerSaveStatusChangePayload:
+    """Payload for container SAVE status change notifications."""
+    id: str
+    user_id: str
+    name: str
+    save_status: str
+    saved_image: Optional[str]
+    save_error: Optional[str]
+    updated_at: str
+
+    @classmethod
+    def from_json(cls, payload: str) -> "ContainerSaveStatusChangePayload":
+        """Parse JSON payload from pg_notify."""
+        data = json.loads(payload)
+        return cls(
+            id=str(data["id"]),
+            user_id=str(data["user_id"]),
+            name=data["name"],
+            save_status=data["save_status"],
+            saved_image=data.get("saved_image"),
+            save_error=data.get("save_error"),
             updated_at=data["updated_at"]
         )
 

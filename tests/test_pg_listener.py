@@ -20,7 +20,9 @@ from browseterm_db.common.config import TEST_MIGRATIONS_DIR
 from browseterm_db.common.pg_listener import (
     PGListener,
     ContainerStatusChangePayload,
-    CONTAINER_STATUS_CHANGE_CHANNEL
+    ContainerSaveStatusChangePayload,
+    CONTAINER_STATUS_CHANGE_CHANNEL,
+    CONTAINER_SAVE_STATUS_CHANGE_CHANNEL
 )
 
 
@@ -85,6 +87,97 @@ class TestContainerStatusChangePayload(TestCase):
         """
         print('test_3_channel_constant_value: ', end="")
         self.assertEqual(CONTAINER_STATUS_CHANGE_CHANNEL, "container_status_change")
+        print('OK')
+
+
+class TestContainerSaveStatusChangePayload(TestCase):
+    """
+    Tests for ContainerSaveStatusChangePayload dataclass
+    """
+
+    def test_1_from_json_valid_payload(self) -> None:
+        """
+        Test parsing a valid JSON payload (all fields present)
+        """
+        print('test_1_from_json_valid_payload: ', end="")
+        payload_dict = {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "user_id": "987e6543-e21b-12d3-a456-426614174000",
+            "name": "test-container",
+            "save_status": "Succeeded",
+            "saved_image": "zim95/test-container-image:latest",
+            "save_error": None,
+            "updated_at": "2026-07-18T10:30:00"
+        }
+        payload_json = json.dumps(payload_dict)
+
+        result = ContainerSaveStatusChangePayload.from_json(payload_json)
+
+        self.assertEqual(result.id, payload_dict["id"])
+        self.assertEqual(result.user_id, payload_dict["user_id"])
+        self.assertEqual(result.name, payload_dict["name"])
+        self.assertEqual(result.save_status, payload_dict["save_status"])
+        self.assertEqual(result.saved_image, payload_dict["saved_image"])
+        self.assertEqual(result.save_error, payload_dict["save_error"])
+        self.assertEqual(result.updated_at, payload_dict["updated_at"])
+        print('OK')
+
+    def test_2_from_json_missing_optional_fields(self) -> None:
+        """
+        Test parsing a payload where optional saved_image/save_error are absent.
+        These should default to None via data.get().
+        """
+        print('test_2_from_json_missing_optional_fields: ', end="")
+        payload_dict = {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "user_id": "987e6543-e21b-12d3-a456-426614174000",
+            "name": "my-container",
+            "save_status": "Pending",
+            "updated_at": "2026-07-18T12:00:00"
+        }
+        payload_json = json.dumps(payload_dict)
+
+        result = ContainerSaveStatusChangePayload.from_json(payload_json)
+
+        self.assertEqual(result.id, payload_dict["id"])
+        self.assertEqual(result.user_id, payload_dict["user_id"])
+        self.assertEqual(result.name, payload_dict["name"])
+        self.assertEqual(result.save_status, payload_dict["save_status"])
+        # optional fields missing from payload -> None via .get()
+        self.assertIsNone(result.saved_image)
+        self.assertIsNone(result.save_error)
+        self.assertEqual(result.updated_at, payload_dict["updated_at"])
+        print('OK')
+
+    def test_3_from_json_converts_ids_to_str(self) -> None:
+        """
+        Test that id and user_id are converted to strings
+        """
+        print('test_3_from_json_converts_ids_to_str: ', end="")
+        payload_dict = {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "user_id": "987e6543-e21b-12d3-a456-426614174000",
+            "name": "my-container",
+            "save_status": "Failed",
+            "saved_image": None,
+            "save_error": "snapshot push failed",
+            "updated_at": "2026-07-18T12:00:00"
+        }
+        payload_json = json.dumps(payload_dict)
+
+        result = ContainerSaveStatusChangePayload.from_json(payload_json)
+
+        self.assertIsInstance(result.id, str)
+        self.assertIsInstance(result.user_id, str)
+        self.assertEqual(result.save_error, "snapshot push failed")
+        print('OK')
+
+    def test_4_channel_constant_value(self) -> None:
+        """
+        Test that the save status channel constant has the expected value
+        """
+        print('test_4_channel_constant_value: ', end="")
+        self.assertEqual(CONTAINER_SAVE_STATUS_CHANGE_CHANNEL, "container_save_status_change")
         print('OK')
 
 
