@@ -22,12 +22,14 @@ DEFAULT_STORAGE_LIMIT: str = '2Gi'
 
 
 class ContainerStatus(enum.Enum):
-    """Container status enum - Kubernetes pod phases"""
+    """Container status enum - Kubernetes pod phases + workspace lifecycle states"""
     PENDING = "Pending"
     RUNNING = "Running"
     SUCCEEDED = "Succeeded"
     FAILED = "Failed"
     UNKNOWN = "Unknown"
+    HIBERNATED = "Hibernated"  # idle > threshold: saved + pod deleted to free resources
+    RESUMING = "Resuming"      # user returned: recreating the pod from saved_image
 
 
 class SaveStatus(enum.Enum):

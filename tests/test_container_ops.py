@@ -346,6 +346,28 @@ class TestSaveStatusEnum(TestCase):
         print('OK')
 
 
+class TestContainerStatusEnum(TestCase):
+    '''
+    Test the ContainerStatus enum values (no database required).
+    Includes the workspace-lifecycle states HIBERNATED / RESUMING.
+    '''
+    def test_container_status_enum_values(self) -> None:
+        print('test_container_status_enum_values: ', end="")
+        self.assertEqual(ContainerStatus.PENDING.value, "Pending")
+        self.assertEqual(ContainerStatus.RUNNING.value, "Running")
+        self.assertEqual(ContainerStatus.SUCCEEDED.value, "Succeeded")
+        self.assertEqual(ContainerStatus.FAILED.value, "Failed")
+        self.assertEqual(ContainerStatus.UNKNOWN.value, "Unknown")
+        self.assertEqual(ContainerStatus.HIBERNATED.value, "Hibernated")
+        self.assertEqual(ContainerStatus.RESUMING.value, "Resuming")
+        # exactly these seven members
+        self.assertEqual(
+            {s.value for s in ContainerStatus},
+            {"Pending", "Running", "Succeeded", "Failed", "Unknown", "Hibernated", "Resuming"}
+        )
+        print('OK')
+
+
 class TestContainerSaveStatusUpdates(TestCase):
     '''
     Integration tests for the save/snapshot status lifecycle on the containers table.
