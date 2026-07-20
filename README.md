@@ -32,7 +32,7 @@ SQLAlchemy ORM library setup. Handles migrations as well.
 # Running tests
 - To run the tests, we need to first clone the repository:
    ```bash
-   $ https://github.com/Zim95/browseterm-db.git
+   $ git clone https://github.com/Zim95/browseterm-db.git
    ```
 
 - Create an `.env` file at the root of the directory with the following values:
