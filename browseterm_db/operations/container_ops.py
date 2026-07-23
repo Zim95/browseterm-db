@@ -3,7 +3,7 @@ Container operations - Database operations for Container model
 """
 # builtins
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 
 # sqlalchemy
@@ -88,6 +88,37 @@ class ContainerOps(DBOperations):
             return OperationResult(success=False, error=str(e))
         except SQLAlchemyError as e:
             logger.error(f"Error finding containers: {str(e)}")
+            self._rollback_and_close()
+            return OperationResult(success=False, error=f"Database error: {str(e)}")
+
+    def find_idle_containers(self, threshold_seconds: int) -> OperationResult:
+        """Find RUNNING containers whose last_active_at is older than the idle threshold.
+
+        Used by the reaper to pick containers to hibernate. Containers with a null
+        last_active_at are treated as not-yet-tracked and are NOT returned.
+        """
+        try:
+            session: Session = self._get_session()
+            cutoff: datetime = datetime.now(timezone.utc) - timedelta(seconds=threshold_seconds)
+            query: Query = session.query(Container).filter(
+                Container.status == ContainerStatus.RUNNING,
+                Container.last_active_at.isnot(None),
+                Container.last_active_at < cutoff,
+            )
+            containers: List[Container] = query.all()
+            result_list: List[Dict[str, Any]] = [container.to_dict() for container in containers]
+            self._close_session()
+            return OperationResult(
+                success=True,
+                message=f"Found {len(result_list)} idle containers",
+                data=result_list
+            )
+        except ValueError as e:
+            logger.error(f"Value Error finding idle containers: {str(e)}")
+            self._rollback_and_close()
+            return OperationResult(success=False, error=str(e))
+        except SQLAlchemyError as e:
+            logger.error(f"Error finding idle containers: {str(e)}")
             self._rollback_and_close()
             return OperationResult(success=False, error=f"Database error: {str(e)}")
 

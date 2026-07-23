@@ -9,7 +9,7 @@ Here in tests, we want to test the following:
 
 from dotenv import load_dotenv
 from unittest import TestCase
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import os
 
 # local
@@ -135,6 +135,7 @@ class TestContainerOps(TestCase):
         self.assertEqual(container_result.data["save_status"], "None")  # SaveStatus.NONE has string value "None"
         self.assertEqual(container_result.data["save_error"], None)  # save_error should be None by default
         self.assertEqual(container_result.data["last_saved_at"], None)  # last_saved_at should be None by default
+        self.assertEqual(container_result.data["last_active_at"], None)  # last_active_at should be None by default
         # delete the user
         delete_result: OperationResult = self.user_ops.delete({"id": user_id})
         self.assertTrue(delete_result.success, "User deletion should succeed")
@@ -492,6 +493,94 @@ class TestContainerSaveStatusUpdates(TestCase):
         self.assertTrue(result.success, "Update with a long saved_image should succeed")
         row: dict = self.container_ops.find_one({"id": container_id}).data
         self.assertEqual(row["saved_image"], long_image)
+        print('OK')
+
+
+class TestFindIdleContainers(TestCase):
+    '''
+    Integration tests for ContainerOps.find_idle_containers used by the idle reaper.
+    Exercises the real last_active_at column and the status=RUNNING + age filter
+    against the test database.
+    '''
+    def setUp(self) -> None:
+        self.db_config: DBConfig = DBConfig(
+            username=os.getenv('TEST_DB_USERNAME'),
+            password=os.getenv('TEST_DB_PASSWORD'),
+            host=os.getenv('TEST_DB_HOST'),
+            port=int(os.getenv('TEST_DB_PORT')),
+            database=os.getenv('TEST_DB_DATABASE')
+        )
+        self.container_ops: ContainerOps = ContainerOps(self.db_config)
+        self.image_ops: ImageOps = ImageOps(self.db_config)
+        self.user_ops: UserOps = UserOps(self.db_config)
+        self._user_ids: list = []
+
+    def tearDown(self) -> None:
+        for user_id in self._user_ids:
+            self.user_ops.delete({"id": user_id})
+        self.image_ops.delete_many({})
+
+    def _make_container(self, name: str, status: ContainerStatus) -> str:
+        n: int = len(self._user_ids) + 1
+        user_result: OperationResult = self.user_ops.insert({
+            "email": f"idle{n}@example.com",
+            "provider": AuthProvider.GOOGLE,
+            "provider_id": f"google_idle_{n}",
+            "name": "Idle User",
+            "is_active": True,
+        })
+        self.assertTrue(user_result.success, "User creation should succeed")
+        self._user_ids.append(user_result.data["id"])
+        image_result: OperationResult = self.image_ops.insert({
+            "name": f"python:3.12-slim-{n}",  # images.name is unique -> one image per container
+            "image": f"docker.io/library/python:3.12-slim-{n}",
+            "is_active": True,
+        })
+        self.assertTrue(image_result.success, "Image creation should succeed")
+        container_result: OperationResult = self.container_ops.insert({
+            "user_id": user_result.data["id"],
+            "image_id": image_result.data["id"],
+            "name": name,
+            "status": status,
+            "ip_address": "127.0.0.1",
+        })
+        self.assertTrue(container_result.success, "Container creation should succeed")
+        self.assertIsNone(container_result.data["last_active_at"])  # null by default
+        return container_result.data["id"]
+
+    def test_finds_only_running_and_stale(self) -> None:
+        '''Idle = status RUNNING AND last_active_at older than threshold.'''
+        print('test_finds_only_running_and_stale: ', end="")
+        now: datetime = datetime.now(timezone.utc)
+
+        stale_id: str = self._make_container("stale-running", ContainerStatus.RUNNING)
+        self.container_ops.update({"id": stale_id}, {"last_active_at": now - timedelta(seconds=3600)})
+
+        fresh_id: str = self._make_container("fresh-running", ContainerStatus.RUNNING)
+        self.container_ops.update({"id": fresh_id}, {"last_active_at": now})
+
+        pending_id: str = self._make_container("stale-pending", ContainerStatus.PENDING)
+        self.container_ops.update({"id": pending_id}, {"last_active_at": now - timedelta(seconds=3600)})
+
+        untracked_id: str = self._make_container("untracked-running", ContainerStatus.RUNNING)
+
+        result: OperationResult = self.container_ops.find_idle_containers(threshold_seconds=1800)
+        self.assertTrue(result.success, "find_idle_containers should succeed")
+        returned_ids: set = {c["id"] for c in result.data}
+        self.assertIn(stale_id, returned_ids)
+        self.assertNotIn(fresh_id, returned_ids)
+        self.assertNotIn(pending_id, returned_ids)
+        self.assertNotIn(untracked_id, returned_ids)
+        print('OK')
+
+    def test_no_idle_when_all_fresh(self) -> None:
+        '''An empty result is still a success with an empty list.'''
+        print('test_no_idle_when_all_fresh: ', end="")
+        cid: str = self._make_container("fresh-only", ContainerStatus.RUNNING)
+        self.container_ops.update({"id": cid}, {"last_active_at": datetime.now(timezone.utc)})
+        result: OperationResult = self.container_ops.find_idle_containers(threshold_seconds=1800)
+        self.assertTrue(result.success)
+        self.assertEqual(result.data, [])
         print('OK')
 
 

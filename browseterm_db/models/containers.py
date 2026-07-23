@@ -89,6 +89,7 @@ class Container(Base):
     save_status = Column(String(20), nullable=False, default=SaveStatus.NONE.value)  # None/Pending/Running/Succeeded/Failed
     save_error = Column(String(1000), nullable=True)  # Error detail if the last save failed
     last_saved_at = Column(DateTime, nullable=True)  # When the container was last successfully saved
+    last_active_at = Column(DateTime, nullable=True)  # When the container last had user activity (used by the idle reaper)
 
     # Relationships
     user = relationship("User", back_populates="containers")
@@ -126,5 +127,6 @@ class Container(Base):
             "saved_image": self.saved_image,
             "save_status": self.save_status,
             "save_error": self.save_error,
-            "last_saved_at": self.last_saved_at.isoformat() if self.last_saved_at else None
+            "last_saved_at": self.last_saved_at.isoformat() if self.last_saved_at else None,
+            "last_active_at": self.last_active_at.isoformat() if self.last_active_at else None
         }
