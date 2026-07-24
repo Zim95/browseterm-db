@@ -90,6 +90,7 @@ class Container(Base):
     save_error = Column(String(1000), nullable=True)  # Error detail if the last save failed
     last_saved_at = Column(DateTime, nullable=True)  # When the container was last successfully saved
     last_active_at = Column(DateTime, nullable=True)  # When the container last had user activity (used by the idle reaper)
+    last_request_id = Column(String(64), nullable=True)  # request_id of the last request that touched this container (for tracing failures)
 
     # Relationships
     user = relationship("User", back_populates="containers")
@@ -128,5 +129,6 @@ class Container(Base):
             "save_status": self.save_status,
             "save_error": self.save_error,
             "last_saved_at": self.last_saved_at.isoformat() if self.last_saved_at else None,
-            "last_active_at": self.last_active_at.isoformat() if self.last_active_at else None
+            "last_active_at": self.last_active_at.isoformat() if self.last_active_at else None,
+            "last_request_id": self.last_request_id
         }
