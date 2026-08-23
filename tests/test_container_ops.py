@@ -480,6 +480,35 @@ class TestContainerSaveStatusUpdates(TestCase):
         self.assertIsNone(row["saved_image"])
         print('OK')
 
+    def test_explicit_none_clears_save_error(self) -> None:
+        '''Regression test: update(data={"save_error": None}) must actually NULL the column, not
+        silently skip it. This is what a new save's Pending/Running write relies on to clear a
+        stale error left over from a previous failed attempt (_set_save_status /
+        update_save_status both pass save_error=None with exactly this intent).'''
+        print('test_explicit_none_clears_save_error: ', end="")
+        container_id: str = self._make_container()
+
+        # Leave a stale error on the row, as a previous failed save would.
+        self.container_ops.update(filters={"id": container_id}, data={
+            "save_status": SaveStatus.FAILED.value,
+            "save_error": "stale error from a previous attempt",
+        })
+        self.assertEqual(
+            self.container_ops.find_one({"id": container_id}).data["save_error"],
+            "stale error from a previous attempt",
+        )
+
+        # A new save starts: PENDING write explicitly clears save_error.
+        result: OperationResult = self.container_ops.update(filters={"id": container_id}, data={
+            "save_status": SaveStatus.PENDING.value,
+            "save_error": None,
+        })
+        self.assertTrue(result.success, "Update clearing save_error should succeed")
+        row: dict = self.container_ops.find_one({"id": container_id}).data
+        self.assertEqual(row["save_status"], SaveStatus.PENDING.value)
+        self.assertIsNone(row["save_error"], "save_error must be NULL, not the stale value")
+        print('OK')
+
     def test_saved_image_accepts_long_name(self) -> None:
         '''saved_image was widened to 255 chars; a long registry path must persist intact.'''
         print('test_saved_image_accepts_long_name: ', end="")
@@ -579,6 +608,86 @@ class TestFindIdleContainers(TestCase):
         cid: str = self._make_container("fresh-only", ContainerStatus.RUNNING)
         self.container_ops.update({"id": cid}, {"last_active_at": datetime.now(timezone.utc)})
         result: OperationResult = self.container_ops.find_idle_containers(threshold_seconds=1800)
+        self.assertTrue(result.success)
+        self.assertEqual(result.data, [])
+        print('OK')
+
+
+class TestFindStuckSaves(TestCase):
+    '''
+    Integration tests for ContainerOps.find_stuck_saves, used by container-maker's save
+    reconciler to find Pending/Running rows that may have been orphaned by a dead snapshot Job.
+    '''
+    def setUp(self) -> None:
+        self.db_config: DBConfig = DBConfig(
+            username=os.getenv('TEST_DB_USERNAME'),
+            password=os.getenv('TEST_DB_PASSWORD'),
+            host=os.getenv('TEST_DB_HOST'),
+            port=int(os.getenv('TEST_DB_PORT')),
+            database=os.getenv('TEST_DB_DATABASE')
+        )
+        self.container_ops: ContainerOps = ContainerOps(self.db_config)
+        self.image_ops: ImageOps = ImageOps(self.db_config)
+        self.user_ops: UserOps = UserOps(self.db_config)
+        self._user_ids: list = []
+
+    def tearDown(self) -> None:
+        for user_id in self._user_ids:
+            self.user_ops.delete({"id": user_id})
+        self.image_ops.delete_many({})
+
+    def _make_container(self, name: str, save_status: str) -> str:
+        n: int = len(self._user_ids) + 1
+        user_result: OperationResult = self.user_ops.insert({
+            "email": f"stuck{n}@example.com",
+            "provider": AuthProvider.GOOGLE,
+            "provider_id": f"google_stuck_{n}",
+            "name": "Stuck Save User",
+            "is_active": True,
+        })
+        self.assertTrue(user_result.success, "User creation should succeed")
+        self._user_ids.append(user_result.data["id"])
+        image_result: OperationResult = self.image_ops.insert({
+            "name": f"python:3.12-slim-stuck-{n}",
+            "image": f"docker.io/library/python:3.12-slim-stuck-{n}",
+            "is_active": True,
+        })
+        self.assertTrue(image_result.success, "Image creation should succeed")
+        container_result: OperationResult = self.container_ops.insert({
+            "user_id": user_result.data["id"],
+            "image_id": image_result.data["id"],
+            "name": name,
+            "status": ContainerStatus.RUNNING,
+            "ip_address": "127.0.0.1",
+        })
+        self.assertTrue(container_result.success, "Container creation should succeed")
+        container_id: str = container_result.data["id"]
+        if save_status != SaveStatus.NONE.value:
+            self.container_ops.update(filters={"id": container_id}, data={"save_status": save_status})
+        return container_id
+
+    def test_returns_only_pending_and_running(self) -> None:
+        print('test_returns_only_pending_and_running: ', end="")
+        pending_id: str = self._make_container("pending-save", SaveStatus.PENDING.value)
+        running_id: str = self._make_container("running-save", SaveStatus.RUNNING.value)
+        succeeded_id: str = self._make_container("succeeded-save", SaveStatus.SUCCEEDED.value)
+        failed_id: str = self._make_container("failed-save", SaveStatus.FAILED.value)
+        never_saved_id: str = self._make_container("never-saved", SaveStatus.NONE.value)
+
+        result: OperationResult = self.container_ops.find_stuck_saves()
+        self.assertTrue(result.success, "find_stuck_saves should succeed")
+        returned_ids: set = {c["id"] for c in result.data}
+        self.assertIn(pending_id, returned_ids)
+        self.assertIn(running_id, returned_ids)
+        self.assertNotIn(succeeded_id, returned_ids)
+        self.assertNotIn(failed_id, returned_ids)
+        self.assertNotIn(never_saved_id, returned_ids)
+        print('OK')
+
+    def test_empty_when_nothing_in_progress(self) -> None:
+        print('test_empty_when_nothing_in_progress: ', end="")
+        self._make_container("succeeded-only", SaveStatus.SUCCEEDED.value)
+        result: OperationResult = self.container_ops.find_stuck_saves()
         self.assertTrue(result.success)
         self.assertEqual(result.data, [])
         print('OK')

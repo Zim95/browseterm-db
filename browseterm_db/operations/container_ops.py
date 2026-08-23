@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm import Query
 
 # local
-from browseterm_db.models.containers import Container, ContainerStatus
+from browseterm_db.models.containers import Container, ContainerStatus, SaveStatus
 from browseterm_db.operations import DBOperations, OperationResult
 from browseterm_db.models.containers import DEFAULT_CPU_LIMIT, DEFAULT_MEMORY_LIMIT, DEFAULT_STORAGE_LIMIT
 
@@ -119,6 +119,36 @@ class ContainerOps(DBOperations):
             return OperationResult(success=False, error=str(e))
         except SQLAlchemyError as e:
             logger.error(f"Error finding idle containers: {str(e)}")
+            self._rollback_and_close()
+            return OperationResult(success=False, error=f"Database error: {str(e)}")
+
+    def find_stuck_saves(self) -> OperationResult:
+        """Find all containers whose save_status is Pending or Running.
+
+        These are in-progress saves as far as the DB knows. Used by container-maker's save
+        reconciler to find candidates that may have been orphaned by a dead/evicted snapshot
+        Job -- it still has to check each one's actual Job state before deciding anything is
+        really stuck (a fresh save is legitimately Pending/Running for a while).
+        """
+        try:
+            session: Session = self._get_session()
+            query: Query = session.query(Container).filter(
+                Container.save_status.in_([SaveStatus.PENDING.value, SaveStatus.RUNNING.value]),
+            )
+            containers: List[Container] = query.all()
+            result_list: List[Dict[str, Any]] = [container.to_dict() for container in containers]
+            self._close_session()
+            return OperationResult(
+                success=True,
+                message=f"Found {len(result_list)} in-progress saves",
+                data=result_list
+            )
+        except ValueError as e:
+            logger.error(f"Value Error finding stuck saves: {str(e)}")
+            self._rollback_and_close()
+            return OperationResult(success=False, error=str(e))
+        except SQLAlchemyError as e:
+            logger.error(f"Error finding stuck saves: {str(e)}")
             self._rollback_and_close()
             return OperationResult(success=False, error=f"Database error: {str(e)}")
 
@@ -258,11 +288,14 @@ class ContainerOps(DBOperations):
                 if hasattr(Container, key) and value is not None:  # we added value is not None because none of the values are nullable in the container model.
                     converted_value = self._convert_filter_value(key, value)
                     query = query.filter(getattr(Container, key) == converted_value)
-            # Prepare update data
+            # Prepare update data. Unlike the filters loop above, a None value here is NOT
+            # "skip this field" -- callers (e.g. clearing save_error when a new save starts)
+            # pass None explicitly meaning "set this column to NULL". Only keys the caller
+            # omitted from `data` entirely are left untouched.
             update_data: Dict[str, Any] = {}
             for key, value in data.items():
-                if hasattr(Container, key) and key not in ['id', 'created_at', 'user_id'] and value is not None:
-                    update_data[key] = self._convert_update_value(key, value)
+                if hasattr(Container, key) and key not in ['id', 'created_at', 'user_id']:
+                    update_data[key] = self._convert_update_value(key, value) if value is not None else None
             # Add updated_at timestamp
             update_data['updated_at'] = datetime.now(timezone.utc)
             # Perform update
