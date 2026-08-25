@@ -107,6 +107,8 @@ class TestContainerSaveStatusChangePayload(TestCase):
             "save_status": "Succeeded",
             "saved_image": "zim95/test-container-image:latest",
             "save_error": None,
+            "last_saved_at": "2026-07-18T10:30:00",
+            "last_save_attempted_at": "2026-07-18T10:29:40",
             "updated_at": "2026-07-18T10:30:00"
         }
         payload_json = json.dumps(payload_dict)
@@ -119,13 +121,15 @@ class TestContainerSaveStatusChangePayload(TestCase):
         self.assertEqual(result.save_status, payload_dict["save_status"])
         self.assertEqual(result.saved_image, payload_dict["saved_image"])
         self.assertEqual(result.save_error, payload_dict["save_error"])
+        self.assertEqual(result.last_saved_at, payload_dict["last_saved_at"])
+        self.assertEqual(result.last_save_attempted_at, payload_dict["last_save_attempted_at"])
         self.assertEqual(result.updated_at, payload_dict["updated_at"])
         print('OK')
 
     def test_2_from_json_missing_optional_fields(self) -> None:
         """
-        Test parsing a payload where optional saved_image/save_error are absent.
-        These should default to None via data.get().
+        Test parsing a payload where optional saved_image/save_error/last_saved_at/
+        last_save_attempted_at are absent. These should default to None via data.get().
         """
         print('test_2_from_json_missing_optional_fields: ', end="")
         payload_dict = {
@@ -146,6 +150,8 @@ class TestContainerSaveStatusChangePayload(TestCase):
         # optional fields missing from payload -> None via .get()
         self.assertIsNone(result.saved_image)
         self.assertIsNone(result.save_error)
+        self.assertIsNone(result.last_saved_at)
+        self.assertIsNone(result.last_save_attempted_at)
         self.assertEqual(result.updated_at, payload_dict["updated_at"])
         print('OK')
 

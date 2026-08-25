@@ -51,6 +51,8 @@ class ContainerSaveStatusChangePayload:
     save_status: str
     saved_image: Optional[str]
     save_error: Optional[str]
+    last_saved_at: Optional[str]
+    last_save_attempted_at: Optional[str]
     updated_at: str
 
     @classmethod
@@ -64,6 +66,8 @@ class ContainerSaveStatusChangePayload:
             save_status=data["save_status"],
             saved_image=data.get("saved_image"),
             save_error=data.get("save_error"),
+            last_saved_at=data.get("last_saved_at"),
+            last_save_attempted_at=data.get("last_save_attempted_at"),
             updated_at=data["updated_at"]
         )
 

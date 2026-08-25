@@ -89,6 +89,7 @@ class Container(Base):
     save_status = Column(String(20), nullable=False, default=SaveStatus.NONE.value)  # None/Pending/Running/Succeeded/Failed
     save_error = Column(String(1000), nullable=True)  # Error detail if the last save failed
     last_saved_at = Column(DateTime, nullable=True)  # When the container was last successfully saved
+    last_save_attempted_at = Column(DateTime, nullable=True)  # When the most recent save was initiated (Pending set), regardless of outcome
     last_active_at = Column(DateTime, nullable=True)  # When the container last had user activity (used by the idle reaper)
     last_request_id = Column(String(64), nullable=True)  # request_id of the last request that touched this container (for tracing failures)
 
@@ -129,6 +130,7 @@ class Container(Base):
             "save_status": self.save_status,
             "save_error": self.save_error,
             "last_saved_at": self.last_saved_at.isoformat() if self.last_saved_at else None,
+            "last_save_attempted_at": self.last_save_attempted_at.isoformat() if self.last_save_attempted_at else None,
             "last_active_at": self.last_active_at.isoformat() if self.last_active_at else None,
             "last_request_id": self.last_request_id
         }
