@@ -81,6 +81,7 @@ class User(Base):
     containers = relationship("Container", back_populates="user", cascade="all, delete-orphan")
     subscription = relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
     orders = relationship("Orders", back_populates="user", cascade="all, delete-orphan")
+    devices = relationship("Device", back_populates="user", cascade="all, delete-orphan")
 
     # Indexes and constraints
     '''

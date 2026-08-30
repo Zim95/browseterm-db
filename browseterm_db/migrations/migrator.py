@@ -106,8 +106,10 @@ class Migrator:
             conn.execute(text("""
                 DROP TABLE IF EXISTS orders CASCADE;
                 DROP TABLE IF EXISTS containers CASCADE;
+                DROP TABLE IF EXISTS devices CASCADE;
                 DROP TABLE IF EXISTS subscriptions CASCADE;
                 DROP TABLE IF EXISTS subscription_types CASCADE;
+                DROP TABLE IF EXISTS images CASCADE;
                 DROP TABLE IF EXISTS users CASCADE;
             """))
             # Drop all custom enum types
@@ -118,6 +120,7 @@ class Migrator:
                 DROP TYPE IF EXISTS orderstatus CASCADE;
                 DROP TYPE IF EXISTS subscriptionstatus CASCADE;
                 DROP TYPE IF EXISTS containerstatus CASCADE;
+                DROP TYPE IF EXISTS devicestatus CASCADE;
             """))
             conn.commit()
         print("Database reset complete.")

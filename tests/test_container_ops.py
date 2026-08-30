@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from unittest import TestCase
 from datetime import datetime, timezone, timedelta
 import os
+import uuid
 
 # local
 from browseterm_db.common.config import DBConfig
@@ -19,6 +20,7 @@ from browseterm_db.common.config import TEST_MIGRATIONS_DIR
 from browseterm_db.operations.container_ops import ContainerOps
 from browseterm_db.operations.image_ops import ImageOps
 from browseterm_db.operations.user_ops import UserOps
+from browseterm_db.operations.device_ops import DeviceOps
 from browseterm_db.models.users import AuthProvider
 from browseterm_db.operations import OperationResult
 from browseterm_db.models.containers import ContainerStatus, SaveStatus
@@ -690,6 +692,146 @@ class TestFindStuckSaves(TestCase):
         result: OperationResult = self.container_ops.find_stuck_saves()
         self.assertTrue(result.success)
         self.assertEqual(result.data, [])
+        print('OK')
+
+
+class TestContainerDeviceAssociation(TestCase):
+    '''
+    Tests for containers.device_id: which device (if any) is currently hosting a container's
+    active runtime. NULL means fully hibernated/portable, not tied to any device.
+    '''
+    def setUp(self) -> None:
+        self.db_config: DBConfig = DBConfig(
+            username=os.getenv('TEST_DB_USERNAME'),
+            password=os.getenv('TEST_DB_PASSWORD'),
+            host=os.getenv('TEST_DB_HOST'),
+            port=int(os.getenv('TEST_DB_PORT')),
+            database=os.getenv('TEST_DB_DATABASE')
+        )
+        self.container_ops: ContainerOps = ContainerOps(self.db_config)
+        self.device_ops: DeviceOps = DeviceOps(self.db_config)
+        self.user_ops: UserOps = UserOps(self.db_config)
+
+    def _create_user(self, email: str, provider_id: str) -> dict:
+        result: OperationResult = self.user_ops.insert({
+            "email": email,
+            "provider": AuthProvider.GOOGLE,
+            "provider_id": provider_id,
+            "name": "Device Association User",
+            "is_active": True,
+        })
+        self.assertTrue(result.success, f"User creation failed: {result.error}")
+        return result.data
+
+    def _create_device(self, user_id: str, device_name: str) -> dict:
+        result: OperationResult = self.device_ops.insert({
+            "user_id": user_id,
+            "device_name": device_name,
+            "os": "macOS",
+            "architecture": "arm64",
+            "total_cpu": 8,
+            "total_memory_bytes": 17179869184,
+            "total_storage_bytes": 512000000000,
+            "allocated_cpu": 4,
+            "allocated_memory_bytes": 8589934592,
+            "allocated_storage_bytes": 100000000000,
+        })
+        self.assertTrue(result.success, f"Device creation failed: {result.error}")
+        return result.data
+
+    def test_1_container_created_without_device_id_defaults_to_none(self) -> None:
+        '''
+        Test case 1: A container created without device_id should default to NULL
+        (fully hibernated/portable, not tied to any device).
+        '''
+        print('test_1_container_created_without_device_id_defaults_to_none: ', end="")
+        user: dict = self._create_user("container_device1@example.com", "google_cd_1")
+        container_result: OperationResult = self.container_ops.insert({
+            "user_id": user["id"],
+            "name": "portable-container",
+            "status": ContainerStatus.HIBERNATED,
+        })
+        self.assertTrue(container_result.success, f"Container creation failed: {container_result.error}")
+        self.assertIsNone(container_result.data["device_id"])
+
+        # cleanup
+        self.user_ops.delete({"id": user["id"]})
+        print('OK')
+
+    def test_2_container_created_with_device_id(self) -> None:
+        '''
+        Test case 2: Creating a container with a valid device_id should associate it with
+        that device, and the container should be findable by device_id.
+        '''
+        print('test_2_container_created_with_device_id: ', end="")
+        user: dict = self._create_user("container_device2@example.com", "google_cd_2")
+        device: dict = self._create_device(user["id"], "MacBook Pro")
+
+        container_result: OperationResult = self.container_ops.insert({
+            "user_id": user["id"],
+            "device_id": device["id"],
+            "name": "running-container",
+            "status": ContainerStatus.RUNNING,
+        })
+        self.assertTrue(container_result.success, f"Container creation failed: {container_result.error}")
+        self.assertEqual(container_result.data["device_id"], device["id"])
+
+        find_result: OperationResult = self.container_ops.find({"device_id": device["id"]})
+        self.assertTrue(find_result.success)
+        self.assertEqual(len(find_result.data), 1)
+        self.assertEqual(find_result.data[0]["id"], container_result.data["id"])
+
+        # cleanup
+        self.user_ops.delete({"id": user["id"]})
+        print('OK')
+
+    def test_3_container_creation_with_invalid_device_id_should_fail(self) -> None:
+        '''
+        Test case 3: Creating a container referencing a nonexistent device_id should fail
+        (FK constraint violation).
+        '''
+        print('test_3_container_creation_with_invalid_device_id_should_fail: ', end="")
+        user: dict = self._create_user("container_device3@example.com", "google_cd_3")
+        container_result: OperationResult = self.container_ops.insert({
+            "user_id": user["id"],
+            "device_id": str(uuid.uuid4()),
+            "name": "orphan-device-container",
+            "status": ContainerStatus.RUNNING,
+        })
+        self.assertFalse(container_result.success, "Container creation with invalid device_id should fail")
+
+        # cleanup
+        self.user_ops.delete({"id": user["id"]})
+        print('OK')
+
+    def test_4_deleting_device_sets_container_device_id_to_null(self) -> None:
+        '''
+        Test case 4: Deleting a device should set device_id to NULL on its containers
+        (ON DELETE SET NULL) without deleting the containers themselves.
+        '''
+        print('test_4_deleting_device_sets_container_device_id_to_null: ', end="")
+        user: dict = self._create_user("container_device4@example.com", "google_cd_4")
+        device: dict = self._create_device(user["id"], "MacBook Air")
+
+        container_result: OperationResult = self.container_ops.insert({
+            "user_id": user["id"],
+            "device_id": device["id"],
+            "name": "hosted-container",
+            "status": ContainerStatus.RUNNING,
+        })
+        self.assertTrue(container_result.success)
+        container_id: str = container_result.data["id"]
+
+        delete_result: OperationResult = self.device_ops.delete({"id": device["id"]})
+        self.assertTrue(delete_result.success, "Device deletion should succeed")
+
+        find_result: OperationResult = self.container_ops.find_one({"id": container_id})
+        self.assertTrue(find_result.success)
+        self.assertIsNotNone(find_result.data, "Container should still exist after its device is deleted")
+        self.assertIsNone(find_result.data["device_id"], "device_id should be NULL after the device is deleted")
+
+        # cleanup
+        self.user_ops.delete({"id": user["id"]})
         print('OK')
 
 

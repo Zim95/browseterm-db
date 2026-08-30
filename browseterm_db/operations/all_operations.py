@@ -8,6 +8,7 @@ from browseterm_db.operations.container_ops import ContainerOps
 from browseterm_db.operations.orders_ops import OrdersOps
 from browseterm_db.operations.subscription_ops import SubscriptionOps
 from browseterm_db.operations.subscription_type_ops import SubscriptionTypeOps
+from browseterm_db.operations.device_ops import DeviceOps
 from browseterm_db.operations import DBOperations, OperationResult
 from browseterm_db.common.config import DBConfig
 
@@ -20,6 +21,7 @@ __all__ = [
     'OrdersOps',
     'SubscriptionOps',
     'SubscriptionTypeOps',
+    'DeviceOps',
     'DBOperations',
     'OperationResult',
     'DBConfig'

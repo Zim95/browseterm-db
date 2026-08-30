@@ -53,6 +53,14 @@ class Container(Base):
     # Foreign keys
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     image_id = Column(UUID(as_uuid=True), ForeignKey('images.id', ondelete='SET NULL'), nullable=True)
+    '''
+    device_id: which device is currently hosting this container's active runtime, if any.
+    - Set while the container has a live pod on a device (running/resuming/etc).
+    - NULL once the container is fully hibernated and portable (no active runtime anywhere).
+    ON DELETE SET NULL because removing a device should not delete the container/workspace itself,
+    only its association to that (now-gone) device.
+    '''
+    device_id = Column(UUID(as_uuid=True), ForeignKey('devices.id', ondelete='SET NULL'), nullable=True)
 
     # Container information
     name = Column(String(255), nullable=False)
@@ -96,11 +104,13 @@ class Container(Base):
     # Relationships
     user = relationship("User", back_populates="containers")
     image_ref = relationship("Image", back_populates="containers")
+    device_ref = relationship("Device", back_populates="containers")
 
     # Indexes and constraints
     __table_args__ = (
         Index('idx_container_user_id', user_id),
         Index('idx_container_image_id', image_id),
+        Index('idx_container_device_id', device_id),
         Index('idx_container_status', status),
         Index('idx_container_user_status', user_id, status),
         Index('idx_container_deleted_at', deleted_at),
@@ -113,6 +123,7 @@ class Container(Base):
             "id": str(self.id),
             "user_id": str(self.user_id),
             "image_id": str(self.image_id) if self.image_id else None,
+            "device_id": str(self.device_id) if self.device_id else None,
             "name": self.name,
             "status": self.status.value if self.status else None,
             "cpu_limit": self.cpu_limit,
