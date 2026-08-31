@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any
 
 # sqlalchemy
-from sqlalchemy import Column, String, DateTime, Index, ForeignKey, Enum, UniqueConstraint
+from sqlalchemy import Column, String, Integer, DateTime, Index, ForeignKey, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 
@@ -101,10 +101,17 @@ class Container(Base):
     last_active_at = Column(DateTime, nullable=True)  # When the container last had user activity (used by the idle reaper)
     last_request_id = Column(String(64), nullable=True)  # request_id of the last request that touched this container (for tracing failures)
 
+    # P15 (see ~/browseterm/p.md's "P15" section, plan section 5.5): atomic counter allocating
+    # container_snapshots.version_sequence. Starts at 1 (the next attempt, not the last one), so
+    # "read then increment" allocates the current value and leaves the column pointing at the
+    # next one - see SnapshotOps.allocate_next_sequence (P16's job, not read here in P15).
+    next_snapshot_sequence = Column(Integer, nullable=False, default=1)
+
     # Relationships
     user = relationship("User", back_populates="containers")
     image_ref = relationship("Image", back_populates="containers")
     device_ref = relationship("Device", back_populates="containers")
+    snapshots = relationship("ContainerSnapshot", back_populates="container")
 
     # Indexes and constraints
     __table_args__ = (
@@ -143,5 +150,6 @@ class Container(Base):
             "last_saved_at": self.last_saved_at.isoformat() if self.last_saved_at else None,
             "last_save_attempted_at": self.last_save_attempted_at.isoformat() if self.last_save_attempted_at else None,
             "last_active_at": self.last_active_at.isoformat() if self.last_active_at else None,
-            "last_request_id": self.last_request_id
+            "last_request_id": self.last_request_id,
+            "next_snapshot_sequence": self.next_snapshot_sequence,
         }

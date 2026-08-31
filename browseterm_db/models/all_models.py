@@ -9,6 +9,7 @@ from browseterm_db.models.images import Image
 from browseterm_db.models.containers import Container
 from browseterm_db.models.orders import Orders
 from browseterm_db.models.devices import Device
+from browseterm_db.models.container_snapshots import ContainerSnapshot
 from browseterm_db.models import Base
 
 
@@ -21,5 +22,6 @@ __all__ = [
     'Container',
     'Orders',
     'Device',
+    'ContainerSnapshot',
     'Base'
 ]

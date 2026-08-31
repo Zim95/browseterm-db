@@ -1,6 +1,18 @@
 # Browseterm DB
 SQLAlchemy ORM library setup. Handles migrations as well.
 
+## P15 - `container_snapshots`
+
+Adds `container_snapshots` (one row per workspace save/snapshot attempt - `SnapshotOps` in
+`browseterm_db/operations/snapshot_ops.py`, model in `browseterm_db/models/container_snapshots.py`)
+and `containers.next_snapshot_sequence` (the atomic version-allocation counter P16 will use).
+Deliberately a separate table from `images` (the base-image catalog) - saved workspace images
+never mix into that. `container_snapshots.container_id` has a **DB-level** `ON DELETE CASCADE`,
+not just an ORM-level one - `ContainerOps.delete()` does a bulk `query.delete()` that bypasses
+SQLAlchemy ORM cascades entirely, so this has to be enforced by Postgres itself. See
+`~/browseterm/p.md`'s "P15" section for the full write-up, including the version-formatting
+(`browseterm_db/common/snapshot_version.py`, "do NOT perform version arithmetic using strings").
+
 # PreRequisites
 1. Python - 3.11
    To install on a mac. First download and install `python3.11`:
@@ -58,6 +70,15 @@ SQLAlchemy ORM library setup. Handles migrations as well.
    ```bash
    $ python -m unittest discover -s ./tests/ -p "test_*.py"
    ```
+   > Each file's own `AAA_InitialSetup` test does a **destructive** `reset_database()` +
+   > fresh-autogenerate-from-current-models before its own tests run. This has a real, observed
+   > fragility running many files back-to-back against the same long-lived TEST_DB via `discover`
+   > (confirmed pre-existing this session while verifying P15's own new test file, unrelated to
+   > any specific model - reproducible on a clean checkout with zero P15 changes present too) -
+   > likely stale Postgres ENUM types not fully cleaned up between resets. **Running each test
+   > file individually (see below) is the reliable way to verify a change**, not `discover` across
+   > everything in one process. Never point `TEST_DB_*` at a real/shared database given the
+   > destructive resets - always a disposable, single-purpose Postgres instance.
 
 - To run individual file tests:
    ```bash
