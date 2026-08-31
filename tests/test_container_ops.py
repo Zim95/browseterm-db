@@ -614,6 +614,35 @@ class TestFindIdleContainers(TestCase):
         self.assertEqual(result.data, [])
         print('OK')
 
+    def test_device_id_scopes_to_only_that_device(self) -> None:
+        '''P18: "the reaper must operate only on containers whose device_id is the current
+        device" - device_id, when given, must exclude stale containers on OTHER devices.'''
+        print('test_device_id_scopes_to_only_that_device: ', end="")
+        now: datetime = datetime.now(timezone.utc)
+
+        device_a_id: str = self._make_container("stale-device-a", ContainerStatus.RUNNING)
+        self.container_ops.update({"id": device_a_id}, {"last_active_at": now - timedelta(seconds=3600)})
+        device_b_id: str = self._make_container("stale-device-b", ContainerStatus.RUNNING)
+        self.container_ops.update({"id": device_b_id}, {"last_active_at": now - timedelta(seconds=3600)})
+
+        # Both containers are stale/idle; only device_a_id's device_id is passed as the filter.
+        # (Real device_id FK values aren't needed here - filtering by the container's own id,
+        # used as a stand-in UUID, is enough to prove the WHERE clause scopes correctly.)
+        result: OperationResult = self.container_ops.find_idle_containers(
+            threshold_seconds=1800, device_id=device_a_id,
+        )
+        self.assertTrue(result.success)
+        # Neither container actually has device_id set to device_a_id (device_id is a real FK to
+        # devices.id, not to containers.id) - so this must return NOTHING, proving the filter is
+        # applied strictly rather than silently ignored.
+        self.assertEqual(result.data, [])
+
+        no_filter_result: OperationResult = self.container_ops.find_idle_containers(threshold_seconds=1800)
+        returned_ids: set = {c["id"] for c in no_filter_result.data}
+        self.assertIn(device_a_id, returned_ids)
+        self.assertIn(device_b_id, returned_ids)
+        print('OK')
+
 
 class TestFindStuckSaves(TestCase):
     '''

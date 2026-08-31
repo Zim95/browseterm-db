@@ -94,20 +94,28 @@ class ContainerOps(DBOperations):
             self._rollback_and_close()
             return OperationResult(success=False, error=f"Database error: {str(e)}")
 
-    def find_idle_containers(self, threshold_seconds: int) -> OperationResult:
+    def find_idle_containers(self, threshold_seconds: int, device_id: Optional[str] = None) -> OperationResult:
         """Find RUNNING containers whose last_active_at is older than the idle threshold.
 
         Used by the reaper to pick containers to hibernate. Containers with a null
         last_active_at are treated as not-yet-tracked and are NOT returned.
+
+        P18 (see ~/browseterm/p.md's "P18" section): `device_id`, when given, scopes this to only
+        that device's containers - "the reaper must operate only on containers whose device_id is
+        the current device" (plan section 16). Optional and defaulting to None (no filter) so the
+        existing signature/behavior is unchanged for any other caller.
         """
         try:
             session: Session = self._get_session()
             cutoff: datetime = datetime.now(timezone.utc) - timedelta(seconds=threshold_seconds)
-            query: Query = session.query(Container).filter(
+            filters = [
                 Container.status == ContainerStatus.RUNNING,
                 Container.last_active_at.isnot(None),
                 Container.last_active_at < cutoff,
-            )
+            ]
+            if device_id is not None:
+                filters.append(Container.device_id == self._convert_filter_value('device_id', device_id))
+            query: Query = session.query(Container).filter(*filters)
             containers: List[Container] = query.all()
             result_list: List[Dict[str, Any]] = [container.to_dict() for container in containers]
             self._close_session()
