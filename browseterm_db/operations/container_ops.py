@@ -39,11 +39,19 @@ class ContainerOps(DBOperations):
 
     def _convert_update_value(self, key: str, value: Any) -> Any:
         """Convert update values to appropriate types"""
+        _parse_datetime = lambda value: datetime.fromisoformat(value) if isinstance(value, str) else value
         update_conversion_map: dict = {
             'status': lambda value: value if isinstance(value, ContainerStatus) else ContainerStatus(value),
             'user_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
             'image_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
             'device_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
+            # These cross the wire as JSON (browseterm-server-local's CloudClient -> Cloud's
+            # POST /containers/{id}), so the caller sends an ISO string, never a raw datetime -
+            # the stdlib json module can't serialize one at all. Mirrors to_dict()'s own
+            # isoformat() on the way out; this is the same conversion on the way in.
+            'last_saved_at': _parse_datetime,
+            'last_save_attempted_at': _parse_datetime,
+            'last_active_at': _parse_datetime,
         }
         if key in update_conversion_map:
             return update_conversion_map[key](value)

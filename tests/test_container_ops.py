@@ -464,6 +464,25 @@ class TestContainerSaveStatusUpdates(TestCase):
         self.assertIsNone(row["save_error"])
         print('OK')
 
+    def test_timestamp_fields_accept_an_iso_string_not_just_a_raw_datetime(self) -> None:
+        '''Regression: browseterm-server-local's CloudClient sends these fields as ISO strings
+        over JSON (a raw datetime object can't be JSON-serialized at all - caught live as
+        "Object of type datetime is not JSON serializable" the first time a real save actually
+        ran end to end through Cloud's HTTP API instead of a mocked CloudClient). update() must
+        accept a string for last_saved_at/last_save_attempted_at/last_active_at the same way it
+        already accepts a real datetime object for direct, in-process callers.'''
+        print('test_timestamp_fields_accept_an_iso_string_not_just_a_raw_datetime: ', end="")
+        container_id: str = self._make_container()
+        iso_now: str = datetime.now(timezone.utc).isoformat()
+
+        for field in ("last_saved_at", "last_save_attempted_at", "last_active_at"):
+            result: OperationResult = self.container_ops.update(
+                filters={"id": container_id}, data={field: iso_now})
+            self.assertTrue(result.success, f"Update to {field} with an ISO string should succeed")
+            row: dict = self.container_ops.find_one({"id": container_id}).data
+            self.assertIsNotNone(row[field], f"{field} should be set, not left null")
+        print('OK')
+
     def test_save_status_failed_records_error(self) -> None:
         '''A failed save records Failed + a save_error message and leaves saved_image null.'''
         print('test_save_status_failed_records_error: ', end="")
