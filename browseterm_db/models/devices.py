@@ -23,6 +23,12 @@ class DeviceStatus(enum.Enum):
     REVOKED = "Revoked"    # explicitly revoked, no longer usable
 
 
+class TunnelStatus(enum.Enum):
+    """remotetunelling.md: a device's outbound tunnel (ngrok today) reachability state."""
+    ONLINE = "Online"
+    OFFLINE = "Offline"
+
+
 class Device(Base):
     """
     Device model representing a Browseterm installation/device belonging to a user.
@@ -73,6 +79,21 @@ class Device(Base):
 
     revoked_at = Column(DateTime, nullable=True)
 
+    # remotetunelling.md: at most one live tunnel per device at a time - flat columns here rather
+    # than a separate joined table, matching this project's existing convention of tracking a
+    # device's own live/heartbeat state directly on `devices` (see last_seen_at above). tunnel_*
+    # is intentionally ALL-nullable: a device that's never registered a tunnel has none of this,
+    # not zero-valued placeholders.
+    tunnel_provider = Column(String(50), nullable=True)
+    tunnel_public_url = Column(String(2048), nullable=True)
+    tunnel_status = Column(Enum(TunnelStatus), nullable=True)
+    # Monotonically increasing per device, set by the registrar. Guards against a delayed request
+    # from a dead/restarted registrar instance overwriting a newer tunnel - a write is only
+    # accepted if its generation is >= the currently stored one.
+    tunnel_generation = Column(Integer, nullable=False, default=0)
+    tunnel_connected_at = Column(DateTime, nullable=True)
+    tunnel_last_heartbeat_at = Column(DateTime, nullable=True)
+
     # Relationships
     user = relationship("User", back_populates="devices")
     containers = relationship("Container", back_populates="device_ref")
@@ -109,4 +130,10 @@ class Device(Base):
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "revoked_at": self.revoked_at.isoformat() if self.revoked_at else None,
+            "tunnel_provider": self.tunnel_provider,
+            "tunnel_public_url": self.tunnel_public_url,
+            "tunnel_status": self.tunnel_status.value if self.tunnel_status else None,
+            "tunnel_generation": self.tunnel_generation,
+            "tunnel_connected_at": self.tunnel_connected_at.isoformat() if self.tunnel_connected_at else None,
+            "tunnel_last_heartbeat_at": self.tunnel_last_heartbeat_at.isoformat() if self.tunnel_last_heartbeat_at else None,
         }

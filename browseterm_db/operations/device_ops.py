@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm import Query
 
 # local
-from browseterm_db.models.devices import Device, DeviceStatus
+from browseterm_db.models.devices import Device, DeviceStatus, TunnelStatus
 from browseterm_db.operations import DBOperations, OperationResult
 
 
@@ -37,9 +37,13 @@ class DeviceOps(DBOperations):
 
     def _convert_update_value(self, key: str, value: Any) -> Any:
         """Convert update values to appropriate types"""
+        _parse_datetime = lambda value: datetime.fromisoformat(value) if isinstance(value, str) else value
         update_conversion_map: dict = {
             'status': lambda value: value if isinstance(value, DeviceStatus) else DeviceStatus(value),
             'user_id': lambda value: uuid.UUID(value) if isinstance(value, str) else value,
+            'tunnel_status': lambda value: value if isinstance(value, TunnelStatus) else TunnelStatus(value),
+            'tunnel_connected_at': _parse_datetime,
+            'tunnel_last_heartbeat_at': _parse_datetime,
         }
         if key in update_conversion_map:
             return update_conversion_map[key](value)

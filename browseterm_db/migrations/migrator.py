@@ -121,6 +121,7 @@ class Migrator:
                 DROP TYPE IF EXISTS subscriptionstatus CASCADE;
                 DROP TYPE IF EXISTS containerstatus CASCADE;
                 DROP TYPE IF EXISTS devicestatus CASCADE;
+                DROP TYPE IF EXISTS tunnelstatus CASCADE;
             """))
             conn.commit()
         print("Database reset complete.")
