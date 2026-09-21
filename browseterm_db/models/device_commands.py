@@ -76,6 +76,13 @@ class DeviceCommand(Base):
     # live reference (matches container_snapshots' own deliberate use of plain strings elsewhere).
     expected_container_state = Column(String(20), nullable=True)
 
+    # Migration Parts 8-11: the canonical container config snapshot Cloud resolved at
+    # command-creation time (image name, resource requests/limits, env vars, publish info,
+    # saved_image for Resume) - embedded verbatim into ExecuteCommand.container_config_json on
+    # delivery (see browseterm-server's src/control/servicer.py). JSON text, not a JSON column
+    # type, since it crosses the wire as an opaque string on the protobuf side too.
+    container_config_json = Column(String(4000), nullable=True)
+
     status = Column(Enum(CommandStatus), nullable=False, default=CommandStatus.QUEUED)
     attempt_count = Column(Integer, nullable=False, default=0)
 
@@ -142,6 +149,7 @@ class DeviceCommand(Base):
             "operation": self.operation.value if self.operation else None,
             "placement_generation": self.placement_generation,
             "expected_container_state": self.expected_container_state,
+            "container_config_json": self.container_config_json,
             "status": self.status.value if self.status else None,
             "attempt_count": self.attempt_count,
             "available_at": self.available_at.isoformat() if self.available_at else None,

@@ -178,6 +178,7 @@ class DeviceCommandOps(DBOperations):
                 status=self._convert_insert_value('status', data.get('status', CommandStatus.QUEUED)),
                 request_id=data.get('request_id'),
                 correlation_id=data.get('correlation_id'),
+                container_config_json=data.get('container_config_json'),
             )
             session.add(command)
             session.flush()
@@ -329,6 +330,7 @@ class DeviceCommandOps(DBOperations):
         expected_container_state: Optional[str] = None,
         request_id: Optional[str] = None,
         correlation_id: Optional[str] = None,
+        container_config_json: Optional[str] = None,
     ) -> OperationResult:
         """
         Transactionally reserve device quota and create a command (CREATE/RESUME only).
@@ -409,6 +411,7 @@ class DeviceCommandOps(DBOperations):
                 quota_reserved_cpu=cpu,
                 quota_reserved_memory_bytes=memory_bytes,
                 quota_reserved_storage_bytes=storage_bytes,
+                container_config_json=container_config_json,
             )
             session.add(command)
             session.flush()
