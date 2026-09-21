@@ -16,6 +16,10 @@ import psycopg2.extensions
 # Channel names for pg_notify
 CONTAINER_STATUS_CHANGE_CHANNEL = "container_status_change"
 CONTAINER_SAVE_STATUS_CHANGE_CHANNEL = "container_save_status_change"
+# Migration Part 6: fired once per newly-inserted device_commands row (QUEUED, not yet
+# delivered). The Cloud Device Control gRPC server listens on this to push ExecuteCommand to an
+# already-connected device immediately, instead of relying only on the next reconnect/poll.
+DEVICE_COMMAND_CREATED_CHANNEL = "device_command_created"
 
 
 @dataclass
@@ -69,6 +73,30 @@ class ContainerSaveStatusChangePayload:
             last_saved_at=data.get("last_saved_at"),
             last_save_attempted_at=data.get("last_save_attempted_at"),
             updated_at=data["updated_at"]
+        )
+
+
+@dataclass
+class DeviceCommandCreatedPayload:
+    """Payload for a newly-inserted device_commands row (Migration Part 6)."""
+    id: str
+    device_id: str
+    user_id: str
+    container_id: Optional[str]
+    operation: str
+    created_at: str
+
+    @classmethod
+    def from_json(cls, payload: str) -> "DeviceCommandCreatedPayload":
+        """Parse JSON payload from pg_notify."""
+        data = json.loads(payload)
+        return cls(
+            id=str(data["id"]),
+            device_id=str(data["device_id"]),
+            user_id=str(data["user_id"]),
+            container_id=str(data["container_id"]) if data.get("container_id") else None,
+            operation=data["operation"],
+            created_at=data["created_at"],
         )
 
 
