@@ -363,10 +363,20 @@ class TestContainerStatusEnum(TestCase):
         self.assertEqual(ContainerStatus.UNKNOWN.value, "Unknown")
         self.assertEqual(ContainerStatus.HIBERNATED.value, "Hibernated")
         self.assertEqual(ContainerStatus.RESUMING.value, "Resuming")
-        # exactly these seven members
+        # Migration Part 1: explicit placement states, additive only.
+        self.assertEqual(ContainerStatus.QUEUED.value, "Queued")
+        self.assertEqual(ContainerStatus.CREATING.value, "Creating")
+        self.assertEqual(ContainerStatus.HIBERNATING.value, "Hibernating")
+        self.assertEqual(ContainerStatus.DELETING.value, "Deleting")
+        self.assertEqual(ContainerStatus.DEVICE_OFFLINE.value, "DeviceOffline")
+        self.assertEqual(ContainerStatus.STRANDED.value, "Stranded")
+        # exactly these thirteen members
         self.assertEqual(
             {s.value for s in ContainerStatus},
-            {"Pending", "Running", "Succeeded", "Failed", "Unknown", "Hibernated", "Resuming"}
+            {
+                "Pending", "Running", "Succeeded", "Failed", "Unknown", "Hibernated", "Resuming",
+                "Queued", "Creating", "Hibernating", "Deleting", "DeviceOffline", "Stranded",
+            }
         )
         print('OK')
 

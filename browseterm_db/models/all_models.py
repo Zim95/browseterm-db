@@ -10,6 +10,8 @@ from browseterm_db.models.containers import Container
 from browseterm_db.models.orders import Orders
 from browseterm_db.models.devices import Device
 from browseterm_db.models.container_snapshots import ContainerSnapshot
+from browseterm_db.models.device_commands import DeviceCommand
+from browseterm_db.models.device_credentials import DeviceCredential
 from browseterm_db.models import Base
 
 
@@ -23,5 +25,7 @@ __all__ = [
     'Orders',
     'Device',
     'ContainerSnapshot',
+    'DeviceCommand',
+    'DeviceCredential',
     'Base'
 ]

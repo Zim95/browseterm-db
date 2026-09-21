@@ -104,7 +104,10 @@ class Migrator:
             conn.execute(text("DROP TABLE IF EXISTS alembic_version CASCADE;"))
             # Drop all other tables (in case some exist)
             conn.execute(text("""
+                DROP TABLE IF EXISTS device_commands CASCADE;
+                DROP TABLE IF EXISTS device_credentials CASCADE;
                 DROP TABLE IF EXISTS orders CASCADE;
+                DROP TABLE IF EXISTS container_snapshots CASCADE;
                 DROP TABLE IF EXISTS containers CASCADE;
                 DROP TABLE IF EXISTS devices CASCADE;
                 DROP TABLE IF EXISTS subscriptions CASCADE;
@@ -122,6 +125,9 @@ class Migrator:
                 DROP TYPE IF EXISTS containerstatus CASCADE;
                 DROP TYPE IF EXISTS devicestatus CASCADE;
                 DROP TYPE IF EXISTS tunnelstatus CASCADE;
+                DROP TYPE IF EXISTS snapshotstatus CASCADE;
+                DROP TYPE IF EXISTS commandoperation CASCADE;
+                DROP TYPE IF EXISTS commandstatus CASCADE;
             """))
             conn.commit()
         print("Database reset complete.")

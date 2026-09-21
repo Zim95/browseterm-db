@@ -31,6 +31,16 @@ class ContainerStatus(enum.Enum):
     HIBERNATED = "Hibernated"  # idle > threshold: saved + pod deleted to free resources
     RESUMING = "Resuming"      # user returned: recreating the pod from saved_image
 
+    # Migration Part 1 (explicit placement states, additive only -- every value above this line
+    # predates the migration doc and must keep working unchanged for existing callers across
+    # container-maker/status_monitor/reaper/browseterm-server-local that already read/write them).
+    QUEUED = "Queued"                # a CREATE/RESUME command exists, not yet delivered/accepted
+    CREATING = "Creating"            # Device Agent accepted CREATE, Container Maker call in flight
+    HIBERNATING = "Hibernating"      # HIBERNATE command accepted, snapshot/push/delete in progress
+    DELETING = "Deleting"            # DELETE command accepted, Container Maker call in flight
+    DEVICE_OFFLINE = "DeviceOffline"  # assigned device is offline; state is honestly unknown/stale
+    STRANDED = "Stranded"            # reconciliation diagnostic: observed state contradicts desired state
+
 
 class SaveStatus(enum.Enum):
     """Container save/snapshot operation status (stored as a string)"""
@@ -107,6 +117,16 @@ class Container(Base):
     # next one - see SnapshotOps.allocate_next_sequence (P16's job, not read here in P15).
     next_snapshot_sequence = Column(Integer, nullable=False, default=1)
 
+    '''
+    Migration Part 1: monotonically increasing per container, bumped each time the container is
+    (re)assigned to run on a device (Create, or Resume onto the current active device). A command
+    or a status/result report is only applied if its own placement_generation matches this column
+    at the moment of the conditional update (see DeviceCommandOps.conditional_container_update) -
+    this is what makes a stale report from an old device/old command a safe no-op instead of
+    silently overwriting a newer placement (doc section "Active-device switching", Part 14).
+    '''
+    placement_generation = Column(Integer, nullable=False, default=0)
+
     # Relationships
     user = relationship("User", back_populates="containers")
     image_ref = relationship("Image", back_populates="containers")
@@ -152,4 +172,5 @@ class Container(Base):
             "last_active_at": self.last_active_at.isoformat() if self.last_active_at else None,
             "last_request_id": self.last_request_id,
             "next_snapshot_sequence": self.next_snapshot_sequence,
+            "placement_generation": self.placement_generation,
         }

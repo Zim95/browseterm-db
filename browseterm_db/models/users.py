@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any
 
 # sqlalchemy
-from sqlalchemy import Column, String, DateTime, Boolean, Index, Enum, UniqueConstraint
+from sqlalchemy import Column, String, DateTime, Boolean, Index, Enum, ForeignKey, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -77,11 +77,34 @@ class User(Base):
     '''
     is_active = Column(Boolean, default=True, nullable=False)
 
+    '''
+    Migration Part 1 (BROWSETERM_CLOUD_CONTROL_PLANE_MIGRATION.md): single authoritative pointer
+    for the one-active-device invariant. `use_alter=True` because `devices.user_id` already
+    references `users.id` - this FK is the circular reverse reference, so SQLAlchemy must emit it
+    as a separate ALTER TABLE after both tables exist rather than inline in CREATE TABLE.
+    Activating a device is ALWAYS a single atomic UPDATE of this one column (see
+    DeviceCommandOps.activate_device) - never a "demote every sibling" loop, which is exactly the
+    non-atomic, race-prone pattern this column replaces (src/cloud/device_handlers.py's
+    `_demote_other_devices` predates this migration and does a separate find + per-row update,
+    not a single statement - kept working for now, superseded by this column starting Part 14).
+    ON DELETE SET NULL: removing the active device should not delete the user.
+    '''
+    active_device_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey('devices.id', ondelete='SET NULL', use_alter=True, name='fk_users_active_device_id'),
+        nullable=True,
+    )
+
     # Relationships
     containers = relationship("Container", back_populates="user", cascade="all, delete-orphan")
     subscription = relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
     orders = relationship("Orders", back_populates="user", cascade="all, delete-orphan")
-    devices = relationship("Device", back_populates="user", cascade="all, delete-orphan")
+    # explicit foreign_keys: users.active_device_id is a SECOND, unrelated FK path to devices -
+    # without this, SQLAlchemy cannot infer which FK this relationship (the "owns these devices"
+    # direction) should join on.
+    devices = relationship(
+        "Device", back_populates="user", cascade="all, delete-orphan", foreign_keys="Device.user_id",
+    )
 
     # Indexes and constraints
     '''
@@ -110,5 +133,6 @@ class User(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "last_login": self.last_login.isoformat() if self.last_login else None,
-            "is_active": self.is_active
+            "is_active": self.is_active,
+            "active_device_id": str(self.active_device_id) if self.active_device_id else None,
         }

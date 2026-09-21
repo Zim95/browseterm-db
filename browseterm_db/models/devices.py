@@ -53,6 +53,21 @@ class Device(Base):
     os = Column(String(50), nullable=False)
     architecture = Column(String(20), nullable=False)
     runtime_version = Column(String(50), nullable=True)
+    agent_version = Column(String(50), nullable=True)  # Device Agent version reported in its Hello
+
+    # Migration Part 14: a stable ID minted once per real Desktop/CLI process startup (not per
+    # gRPC reconnect). A startup may request device activation exactly once using this ID; Cloud
+    # treats a repeated activation request with the SAME startup_id as idempotent, and a transient
+    # reconnect (which reuses the existing startup_id rather than minting a new one) must never
+    # re-trigger activation. Nullable: no meaning until a Device Agent actually connects.
+    startup_id = Column(String(100), nullable=True)
+
+    # Migration Part 6/7: bumped by Cloud every time a NEW authenticated gRPC stream generation
+    # for this device replaces the previous one. Lets Cloud/Device Agent detect and discard a
+    # stale command-result or status report that arrived from a connection generation that has
+    # already been superseded by a newer one (same shape as tunnel_generation below, applied to
+    # the control stream instead of the terminal tunnel).
+    connection_generation = Column(Integer, nullable=False, default=0)
 
     # Physical machine capacity
     total_cpu = Column(Integer, nullable=False)
@@ -68,6 +83,19 @@ class Device(Base):
     used_cpu = Column(Integer, nullable=False, default=0)
     used_memory_bytes = Column(BigInteger, nullable=False, default=0)
     used_storage_bytes = Column(BigInteger, nullable=False, default=0)
+
+    '''
+    Migration Part 1: quota held by IN-FLIGHT device_commands (CREATE/RESUME) that have not yet
+    completed, distinct from `used_*` (confirmed running workloads). A Create/Resume request must
+    reserve quota before a command is even delivered, so two concurrent requests can't both
+    observe "enough capacity" and overcommit the device; `used_*` alone can't do this because it
+    is only updated by status_monitor after the pod is actually observed running, which is too
+    late to prevent a race. See DeviceCommandOps.reserve_quota_and_create_command /
+    release_quota_for_command for the only code paths allowed to change these.
+    '''
+    reserved_cpu = Column(Integer, nullable=False, default=0)
+    reserved_memory_bytes = Column(BigInteger, nullable=False, default=0)
+    reserved_storage_bytes = Column(BigInteger, nullable=False, default=0)
 
     gpu_info = Column(JSON, nullable=True)  # Optional GPU discovery/allocation info as JSON
 
@@ -94,8 +122,9 @@ class Device(Base):
     tunnel_connected_at = Column(DateTime, nullable=True)
     tunnel_last_heartbeat_at = Column(DateTime, nullable=True)
 
-    # Relationships
-    user = relationship("User", back_populates="devices")
+    # Relationships. explicit foreign_keys: see users.py's own `devices` relationship docstring -
+    # users.active_device_id is a second, unrelated FK path between these two tables.
+    user = relationship("User", back_populates="devices", foreign_keys=[user_id])
     containers = relationship("Container", back_populates="device_ref")
 
     # Indexes and constraints
@@ -115,6 +144,9 @@ class Device(Base):
             "os": self.os,
             "architecture": self.architecture,
             "runtime_version": self.runtime_version,
+            "agent_version": self.agent_version,
+            "startup_id": self.startup_id,
+            "connection_generation": self.connection_generation,
             "total_cpu": self.total_cpu,
             "total_memory_bytes": self.total_memory_bytes,
             "total_storage_bytes": self.total_storage_bytes,
@@ -124,6 +156,9 @@ class Device(Base):
             "used_cpu": self.used_cpu,
             "used_memory_bytes": self.used_memory_bytes,
             "used_storage_bytes": self.used_storage_bytes,
+            "reserved_cpu": self.reserved_cpu,
+            "reserved_memory_bytes": self.reserved_memory_bytes,
+            "reserved_storage_bytes": self.reserved_storage_bytes,
             "gpu_info": self.gpu_info,
             "status": self.status.value if self.status else None,
             "registered_at": self.registered_at.isoformat() if self.registered_at else None,

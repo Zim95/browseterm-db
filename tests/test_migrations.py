@@ -81,7 +81,10 @@ class TestMigrations(TestCase):
         self.migrator.upgrade()
         # test if we can get all the tables;
         tables: list = self.migrator.get_tables()
-        required_tables = ['alembic_version', 'containers', 'devices', 'images', 'orders', 'subscriptions', 'subscription_types', 'users']
+        required_tables = [
+            'alembic_version', 'containers', 'container_snapshots', 'devices', 'device_commands',
+            'device_credentials', 'images', 'orders', 'subscriptions', 'subscription_types', 'users',
+        ]
         self.assertEqual(set(tables) - set(required_tables), set())
 
         '''
@@ -101,7 +104,10 @@ class TestMigrations(TestCase):
         self.migrator.upgrade()
         # test if we can get all the tables;
         tables: list = self.migrator.get_tables()
-        required_tables = ['alembic_version', 'containers', 'devices', 'images', 'orders', 'subscriptions', 'subscription_types', 'users']
+        required_tables = [
+            'alembic_version', 'containers', 'container_snapshots', 'devices', 'device_commands',
+            'device_credentials', 'images', 'orders', 'subscriptions', 'subscription_types', 'users',
+        ]
         self.assertEqual(set(tables) - set(required_tables), set())
 
         '''
@@ -114,7 +120,10 @@ class TestMigrations(TestCase):
         self.migrator.reset_database()
         self.migrator.upgrade()  # hit upgrade again, all tables should come back again.
         tables: list = self.migrator.get_tables()
-        required_tables = ['alembic_version', 'containers', 'devices', 'images', 'orders', 'subscriptions', 'subscription_types', 'users']
+        required_tables = [
+            'alembic_version', 'containers', 'container_snapshots', 'devices', 'device_commands',
+            'device_credentials', 'images', 'orders', 'subscriptions', 'subscription_types', 'users',
+        ]
         self.assertEqual(set(tables) - set(required_tables), set())
 
 

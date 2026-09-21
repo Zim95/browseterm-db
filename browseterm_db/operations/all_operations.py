@@ -10,6 +10,8 @@ from browseterm_db.operations.subscription_ops import SubscriptionOps
 from browseterm_db.operations.subscription_type_ops import SubscriptionTypeOps
 from browseterm_db.operations.device_ops import DeviceOps
 from browseterm_db.operations.snapshot_ops import SnapshotOps
+from browseterm_db.operations.device_command_ops import DeviceCommandOps
+from browseterm_db.operations.device_credential_ops import DeviceCredentialOps
 from browseterm_db.operations import DBOperations, OperationResult
 from browseterm_db.common.config import DBConfig
 
@@ -24,6 +26,8 @@ __all__ = [
     'SubscriptionTypeOps',
     'DeviceOps',
     'SnapshotOps',
+    'DeviceCommandOps',
+    'DeviceCredentialOps',
     'DBOperations',
     'OperationResult',
     'DBConfig'
