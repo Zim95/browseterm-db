@@ -57,8 +57,15 @@ class ContainerSnapshot(Base):
     version_sequence = Column(Integer, nullable=False)
     version = Column(String(20), nullable=False)
 
-    # Registry location of the built image, once known.
+    # Registry location of the built image, once known. image_repository is the fixed registry
+    # repository every snapshot is pushed to (Part 19: a single private repo, e.g.
+    # "zim95/browseterm" - not one repo per user/container); image_tag is this attempt's own
+    # identity/version, computed at allocation time as f"u_{user_id}_c_{container_id}_v_{version}".
+    # image_reference is the complete, pushable reference once known - repository:tag, or
+    # repository:tag@registry_digest once the push has returned a digest, whichever is more
+    # authoritative at the time it's set (see snapshot_job/main.py).
     image_repository = Column(String(500), nullable=False)
+    image_tag = Column(String(300), nullable=True)
     image_reference = Column(String(500), nullable=True)
     registry_digest = Column(String(255), nullable=True)
 
@@ -92,6 +99,7 @@ class ContainerSnapshot(Base):
             "version_sequence": self.version_sequence,
             "version": self.version,
             "image_repository": self.image_repository,
+            "image_tag": self.image_tag,
             "image_reference": self.image_reference,
             "registry_digest": self.registry_digest,
             "request_id": self.request_id,
