@@ -28,6 +28,7 @@ class CommandOperation(enum.Enum):
     HIBERNATE = "Hibernate"
     RESUME = "Resume"
     RECONCILE = "Reconcile"  # later reconciliation operations, per the migration doc's Part 1 spec
+    SAVE = "Save"  # snapshot without deleting the pod (unlike HIBERNATE) - core reliability feature
 
 
 class CommandStatus(enum.Enum):
