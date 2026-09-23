@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any
 
 # sqlalchemy
-from sqlalchemy import Column, String, Integer, DateTime, Index, ForeignKey, Enum, UniqueConstraint
+from sqlalchemy import Column, String, Integer, DateTime, Index, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 
@@ -141,7 +141,18 @@ class Container(Base):
         Index('idx_container_status', status),
         Index('idx_container_user_status', user_id, status),
         Index('idx_container_deleted_at', deleted_at),
-        UniqueConstraint('user_id', 'name', name='uq_container_user_name'),
+        # Partial, not a plain UniqueConstraint: a soft-deleted row (deleted_at set) must not
+        # block a new container from reusing its name. DELETE now soft-deletes immediately (see
+        # browseterm-server's _delete_container_via_device_command) so the user-visible name frees
+        # up right away, while the actual Kubernetes teardown - and the row's real, hard delete -
+        # still happen asynchronously once Device Agent confirms. Only one non-deleted row per
+        # (user_id, name) is ever allowed; any number of deleted-and-gone ones can share a name.
+        Index(
+            'uq_container_user_name',
+            user_id, name,
+            unique=True,
+            postgresql_where=deleted_at.is_(None),
+        ),
     )
 
     def to_dict(self) -> Dict[str, Any]:

@@ -52,6 +52,7 @@ class ContainerOps(DBOperations):
             'last_saved_at': _parse_datetime,
             'last_save_attempted_at': _parse_datetime,
             'last_active_at': _parse_datetime,
+            'deleted_at': _parse_datetime,
         }
         if key in update_conversion_map:
             return update_conversion_map[key](value)
@@ -69,9 +70,13 @@ class ContainerOps(DBOperations):
             return insert_conversion_map[key](value)
         return value
 
-    def find(self, filters: Dict[str, Any], limit: Optional[int] = None, 
-             offset: Optional[int] = None) -> OperationResult:
-        """Find multiple containers based on filters"""
+    def find(self, filters: Dict[str, Any], limit: Optional[int] = None,
+             offset: Optional[int] = None, exclude_deleted: bool = False) -> OperationResult:
+        """Find multiple containers based on filters.
+
+        exclude_deleted=True adds `deleted_at IS NULL` - a plain filters={"deleted_at": ...} entry
+        can't express this itself (the generic loop below skips any None value, by design, so a
+        caller can't accidentally filter on "deleted_at IS NULL" by passing None)."""
         try:
             session: Session = self._get_session()
             query: Query = session.query(Container)
@@ -80,6 +85,8 @@ class ContainerOps(DBOperations):
                 if hasattr(Container, key) and value is not None:
                     converted_value = self._convert_filter_value(key, value)
                     query = query.filter(getattr(Container, key) == converted_value)
+            if exclude_deleted:
+                query = query.filter(Container.deleted_at.is_(None))
             # Apply pagination
             if offset:
                 query = query.offset(offset)
@@ -171,8 +178,8 @@ class ContainerOps(DBOperations):
             self._rollback_and_close()
             return OperationResult(success=False, error=f"Database error: {str(e)}")
 
-    def find_one(self, filters: Dict[str, Any]) -> OperationResult:
-        """Find a single container based on filters"""
+    def find_one(self, filters: Dict[str, Any], exclude_deleted: bool = False) -> OperationResult:
+        """Find a single container based on filters. See find()'s own docstring for exclude_deleted."""
         try:
             session: Session = self._get_session()
             query: Query = session.query(Container)
@@ -181,6 +188,8 @@ class ContainerOps(DBOperations):
                 if hasattr(Container, key) and value is not None:
                     converted_value = self._convert_filter_value(key, value)
                     query = query.filter(getattr(Container, key) == converted_value)
+            if exclude_deleted:
+                query = query.filter(Container.deleted_at.is_(None))
             container: Container = query.first()
             result_data: Dict[str, Any] | None = None
             message: str = "Container not found"

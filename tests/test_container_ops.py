@@ -893,6 +893,109 @@ class TestContainerDeviceAssociation(TestCase):
         print('OK')
 
 
+class TestSoftDeleteAndNameReuse(TestCase):
+    '''
+    Regression tests for a real production redesign: DELETE now soft-deletes (deleted_at
+    stamped) immediately, before Device Agent has confirmed the actual Kubernetes teardown, so
+    the container disappears from the user's list and frees its name for reuse right away -
+    restoring the old browseterm-server-local system's two-phase split (instant DB removal vs.
+    slow K8s cleanup) that the Cloud Control Plane migration's single-call redesign had dropped.
+    uq_container_user_name is now a partial unique index scoped to `deleted_at IS NULL`
+    specifically to make this safe: any number of soft-deleted rows may share a name, but only
+    one live one ever can.
+    '''
+
+    def setUp(self) -> None:
+        self.db_config: DBConfig = DBConfig(
+            username=os.getenv('TEST_DB_USERNAME'), password=os.getenv('TEST_DB_PASSWORD'),
+            host=os.getenv('TEST_DB_HOST'), port=int(os.getenv('TEST_DB_PORT')),
+            database=os.getenv('TEST_DB_DATABASE'),
+        )
+        self.container_ops: ContainerOps = ContainerOps(self.db_config)
+        self.user_ops: UserOps = UserOps(self.db_config)
+        user_result: OperationResult = self.user_ops.insert({
+            "email": "soft-delete-reuse@example.com", "provider": AuthProvider.GOOGLE,
+            "provider_id": "google_softdelete", "name": "Test User",
+            "profile_picture_url": "https://example.com/profile.jpg", "is_active": True,
+        })
+        self.assertTrue(user_result.success)
+        self.user_id: str = user_result.data["id"]
+
+    def tearDown(self) -> None:
+        self.user_ops.delete({"id": self.user_id})
+
+    def test_soft_deleted_container_does_not_block_a_new_one_with_the_same_name(self) -> None:
+        old = self.container_ops.insert({"user_id": self.user_id, "name": "my-terminal", "status": ContainerStatus.RUNNING})
+        self.assertTrue(old.success)
+
+        mark_deleted = self.container_ops.update({"id": old.data["id"]}, {"deleted_at": datetime.now(timezone.utc)})
+        self.assertTrue(mark_deleted.success)
+
+        new = self.container_ops.insert({"user_id": self.user_id, "name": "my-terminal", "status": ContainerStatus.QUEUED})
+        self.assertTrue(new.success, "a new container should be free to reuse a soft-deleted container's name")
+        self.assertNotEqual(new.data["id"], old.data["id"])
+
+    def test_two_live_containers_with_the_same_name_still_conflict(self) -> None:
+        '''The partial index must not accidentally allow real duplicates through.'''
+        first = self.container_ops.insert({"user_id": self.user_id, "name": "my-terminal", "status": ContainerStatus.RUNNING})
+        self.assertTrue(first.success)
+        second = self.container_ops.insert({"user_id": self.user_id, "name": "my-terminal", "status": ContainerStatus.QUEUED})
+        self.assertFalse(second.success)
+
+    def test_exclude_deleted_hides_soft_deleted_rows_from_find_one(self) -> None:
+        created = self.container_ops.insert({"user_id": self.user_id, "name": "vanishing", "status": ContainerStatus.RUNNING})
+        self.assertTrue(created.success)
+        self.container_ops.update({"id": created.data["id"]}, {"deleted_at": datetime.now(timezone.utc)})
+
+        visible = self.container_ops.find_one({"id": created.data["id"], "user_id": self.user_id}, exclude_deleted=True)
+        self.assertIsNone(visible.data)
+
+        still_findable = self.container_ops.find_one({"id": created.data["id"], "user_id": self.user_id})
+        self.assertIsNotNone(still_findable.data, "the row itself must still exist - only visibility changes")
+
+    def test_exclude_deleted_hides_soft_deleted_rows_from_find(self) -> None:
+        live = self.container_ops.insert({"user_id": self.user_id, "name": "live-one", "status": ContainerStatus.RUNNING})
+        deleted = self.container_ops.insert({"user_id": self.user_id, "name": "gone-one", "status": ContainerStatus.RUNNING})
+        self.assertTrue(live.success and deleted.success)
+        self.container_ops.update({"id": deleted.data["id"]}, {"deleted_at": datetime.now(timezone.utc)})
+
+        result = self.container_ops.find({"user_id": self.user_id}, exclude_deleted=True)
+        self.assertTrue(result.success)
+        ids = {c["id"] for c in result.data}
+        self.assertIn(live.data["id"], ids)
+        self.assertNotIn(deleted.data["id"], ids)
+
+    def test_reverting_deleted_at_to_none_makes_the_container_visible_again(self) -> None:
+        '''What _apply_delete does on a confirmed DELETE failure - undo the optimistic soft
+        delete so the container becomes manageable again.'''
+        created = self.container_ops.insert({"user_id": self.user_id, "name": "retry-me", "status": ContainerStatus.RUNNING})
+        self.container_ops.update({"id": created.data["id"]}, {"deleted_at": datetime.now(timezone.utc)})
+
+        revert = self.container_ops.update({"id": created.data["id"]}, {"deleted_at": None})
+        self.assertTrue(revert.success)
+
+        visible = self.container_ops.find_one({"id": created.data["id"], "user_id": self.user_id}, exclude_deleted=True)
+        self.assertIsNotNone(visible.data)
+        self.assertIsNone(visible.data["deleted_at"])
+
+    def test_revert_fails_cleanly_if_a_new_container_already_claimed_the_name(self) -> None:
+        '''The one genuine edge case: DELETE fails, but by then a new container has already
+        reused the name. The revert must not raise or silently corrupt data - it must just fail,
+        leaving the old row soft-deleted (Part 22's reconciliation loop is the intended backstop
+        for what happens to its orphaned pod).'''
+        old = self.container_ops.insert({"user_id": self.user_id, "name": "contested-name", "status": ContainerStatus.RUNNING})
+        self.container_ops.update({"id": old.data["id"]}, {"deleted_at": datetime.now(timezone.utc)})
+
+        new = self.container_ops.insert({"user_id": self.user_id, "name": "contested-name", "status": ContainerStatus.QUEUED})
+        self.assertTrue(new.success)
+
+        revert = self.container_ops.update({"id": old.data["id"]}, {"deleted_at": None})
+        self.assertFalse(revert.success, "reverting must fail rather than create a duplicate live name")
+
+        still_deleted = self.container_ops.find_one({"id": old.data["id"], "user_id": self.user_id}, exclude_deleted=True)
+        self.assertIsNone(still_deleted.data)
+
+
 class ZZZ_Cleanup(TestCase):
     '''
     Cleanup: Delete all tables.
