@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any
 
 # sqlalchemy
-from sqlalchemy import Column, String, Integer, DateTime, Index, ForeignKey, Enum, and_
+from sqlalchemy import Column, String, Integer, BigInteger, DateTime, Index, ForeignKey, Enum, and_
 from sqlalchemy.dialects.postgresql import UUID, JSON
 from sqlalchemy.orm import relationship
 
@@ -110,8 +110,12 @@ class DeviceCommand(Base):
     # Quota accounting - exactly-once release guard (see DeviceCommandOps.release_quota_for_command).
     # Nullable: only CREATE/RESUME commands ever reserve quota in the first place.
     quota_reserved_cpu = Column(Integer, nullable=True)
-    quota_reserved_memory_bytes = Column(Integer, nullable=True)
-    quota_reserved_storage_bytes = Column(Integer, nullable=True)
+    # Byte counts, not core counts - matching devices.allocated_memory_bytes/used_memory_bytes/
+    # allocated_storage_bytes/used_storage_bytes' own BigInteger type (see the migration that
+    # widened these from a plain Integer for why: a 32-bit column can't hold a routine multi-GB
+    # limit at all).
+    quota_reserved_memory_bytes = Column(BigInteger, nullable=True)
+    quota_reserved_storage_bytes = Column(BigInteger, nullable=True)
     quota_released_at = Column(DateTime, nullable=True)
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
