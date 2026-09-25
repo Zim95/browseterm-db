@@ -130,6 +130,7 @@ class SnapshotOps(DBOperations):
                 version_sequence=data.get('version_sequence'),
                 version=data.get('version'),
                 image_repository=data.get('image_repository'),
+                image_tag=data.get('image_tag'),
                 image_reference=data.get('image_reference'),
                 registry_digest=data.get('registry_digest'),
                 request_id=data.get('request_id'),

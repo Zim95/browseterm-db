@@ -101,6 +101,7 @@ class TestSnapshotOps(TestCase):
             "version_sequence": 1,
             "version": "0.0.0.0.1",
             "image_repository": "browseterm/u_c",
+            "image_tag": "u_user1_c_container1_v_0.0.0.0.1",
             "request_id": "req-1",
         }
         result: OperationResult = self.snapshot_ops.insert(snapshot_data)
@@ -109,6 +110,11 @@ class TestSnapshotOps(TestCase):
         self.assertEqual(result.data["version_sequence"], 1)
         self.assertEqual(result.data["version"], "0.0.0.0.1")
         self.assertEqual(result.data["image_repository"], "browseterm/u_c")
+        # Regression: insert() constructed ContainerSnapshot without passing image_tag at all,
+        # so it was silently dropped and stored NULL regardless of what the caller passed -
+        # snapshot_job then tagged/pushed every single save as "<repo>:None" (a real production
+        # bug hit live 2026-09-25: every save collided on that one literal tag).
+        self.assertEqual(result.data["image_tag"], "u_user1_c_container1_v_0.0.0.0.1")
         self.assertEqual(result.data["image_reference"], None)
         self.assertEqual(result.data["registry_digest"], None)
         self.assertEqual(result.data["request_id"], "req-1")
